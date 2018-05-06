@@ -1,0 +1,19 @@
+|N	|pth	|t_sec	|t_par	|sp_Up	|efic	|CPU	|
+|128	|2	|0.041	|0.015	|2.804	|1.402	|       Intel(R) Core(TM) i3-3217U CPU @ 1.80GHz	|
+|128	|2	|0.040	|0.017	|2.438	|1.219	|       Intel(R) Core(TM) i3-3217U CPU @ 1.80GHz	|
+|128	|2	|0.041	|0.016	|2.574	|1.287	|       Intel(R) Core(TM) i3-3217U CPU @ 1.80GHz	|
+|128	|2	|0.037	|0.016	|2.331	|1.165	|       Intel(R) Core(TM) i3-3217U CPU @ 1.80GHz	|
+|128	|2	|0.031	|0.010	|3.129	|1.565	|       Intel(R) Core(TM) i3-3217U CPU @ 1.80GHz	|
+|128	|2	|0.033	|0.011	|2.873	|1.436	|       Intel(R) Core(TM) i3-3217U CPU @ 1.80GHz	|
+|128	|2	|0.039	|0.012	|3.100	|1.550	|       Intel(R) Core(TM) i3-3217U CPU @ 1.80GHz	|
+|128	|2	|0.039	|0.016	|2.486	|1.243	|       Intel(R) Core(TM) i3-3217U CPU @ 1.80GHz	|
+|128	|2	|0.039	|0.012	|3.353	|1.676	|       Intel(R) Core(TM) i3-3217U CPU @ 1.80GHz	|
+|128	|2	|0.043	|0.014	|3.050	|1.525	|       Intel(R) Core(TM) i3-3217U CPU @ 1.80GHz	|
+|128	|2	|0.039	|0.014	|2.702	|1.351	|       Intel(R) Core(TM) i3-3217U CPU @ 1.80GHz	|
+|128	|2	|0.039	|0.015	|2.578	|1.289	|       Intel(R) Core(TM) i3-3217U CPU @ 1.80GHz	|
+|128	|2	|0.037	|0.015	|2.533	|1.266	|       Intel(R) Core(TM) i3-3217U CPU @ 1.80GHz	|
+|128	|2	|0.038	|0.015	|2.442	|1.221	|       Intel(R) Core(TM) i3-3217U CPU @ 1.80GHz	|
+|128	|2	|0.037	|0.012	|3.122	|1.561	|       Intel(R) Core(TM) i3-3217U CPU @ 1.80GHz	|
+|128	|2	|0.035	|0.011	|3.167	|1.584	|       Intel(R) Core(TM) i3-3217U CPU @ 1.80GHz	|
+|128	|2	|0.037	|0.014	|2.699	|1.349	|       Intel(R) Core(TM) i3-3217U CPU @ 1.80GHz	|
+|128	|2	|0.039	|0.015	|2.599	|1.299	|       Intel(R) Core(TM) i3-3217U CPU @ 1.80GHz	|

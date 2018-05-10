@@ -1,3 +1,0 @@
-|N	|pth	|t_sec	|t_par	|sp_Up	|efic	|CPU	|
-|2048	|2	|272.189	|139.165	|1.956	|0.978	|       Intel(R) Core(TM) i3-3120M CPU @ 2.50GHz	|
-|2048	|2	|272.152	|144.600	|1.882	|0.941	|       Intel(R) Core(TM) i3-3120M CPU @ 2.50GHz	|

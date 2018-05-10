@@ -17,7 +17,7 @@ unsigned int N;
 int total = 1;
 int num[]= {0,1,2,3,4,5,6,7};
 void* multiplicacion(void *arg);
-double *A,*R;
+double *A,*B,*R;
 
 int main(int argc, char *argv[])
 {
@@ -50,6 +50,7 @@ int main(int argc, char *argv[])
   pthread_t Hilos[numThreads];
   //Aloca memoria para las matrices
   A=(double*)malloc(sizeof(double)*N*N);
+  B=(double*)malloc(sizeof(double)*N*N);
   R=(double*)malloc(sizeof(double)*N*N);
 
   //Inicializa las matrices A, B,C en 1
@@ -58,11 +59,14 @@ int main(int argc, char *argv[])
   for(j=0;j<N;j++)
   {
     A[i*N+j]=rand()%100+1;
+    //B[i+N*j]=A[i*N+j];
     R[i*N+j]=0;
   }
  }
 
  timetick = dwalltime();
+
+
 
 //printf("Matriz original\n");
 //print_m(A,N);
@@ -74,8 +78,8 @@ int main(int argc, char *argv[])
    {
     for(k=0;k<N;k++)
     {
-         printf("|(%d,%d,%d) = %.0f + %0.f * %.0f|", i,j,k , R[i*N+j] , (A[i*N+k]), (A[j+k*N]));
-	       R[i*N+j] =  R[i*N+j] + (A[i*N+k])*(A[j+k*N]);
+         printf("|(%d,%d,%d) = %.0f + %0.f * %.0f|", i,j,k , R[i*N+j] , (A[i*N+k]), (B[k+j*N]));
+	       R[i*N+j] =  R[i*N+j] + (A[i*N+k])*(B[k+j*N]);
          printf(" = |%.0f\n",R[i*N+j]);
     }
     printf("(%d,%d) = %.0f\n", i,j, R[i*N+j]);
@@ -83,14 +87,24 @@ int main(int argc, char *argv[])
    printf("\n" );
   }
 */
+
+/* TRANSPUESTA */
+for(i=0;i<N;i++)
+ {
+  for(j=0;j<N;j++)
+  {
+   B[i+N*j] = A[i*N+j];
+  }
+ }
 /* MULTIPLICACION */
+
 for(i=0;i<N;i++)
 {
   for(j=0;j<N;j++)
   {
    for(k=0;k<N;k++)
    {
-        R[i*N+j] =  R[i*N+j] + (A[i*N+k])*(A[j+k*N]);
+        R[i*N+j] =  R[i*N+j] + (A[i*N+k])*(B[k+j*N]);
    }
   }
 }
@@ -127,6 +141,7 @@ fprintf(fp,"|%s\t|\n",cpu_id());
 pthread_exit(NULL);
 fclose(fp);
 free(A);
+free(B);
 free(R);
 }
 
@@ -135,13 +150,21 @@ void *multiplicacion(void *arg)
   int id = *(int*)arg;
   int i,j,k ;
   //printf("\nid: %d , desde: %d, hasta: %d\n ",id,id*total,(id+1)*total);
+  /* TRANSPUESTA */
+  for(i=id*total;i<(id+1)*total;i++)
+  {
+   for(j=0;j<N;j++)
+   {
+    B[i+N*j] = A[i*N+j];
+   }
+  }
   for(i=id*total;i<(id+1)*total;i++)
   {
    for(j=0;j<N;j++)
    {
     for(k=0;k<N;k++)
     {
-      R[i*N+j] =  R[i*N+j] + (A[i*N+k])*(A[j+k*N]);
+      R[i*N+j] =  R[i*N+j] + (A[i*N+k])*(B[k+j*N]);
     }
    }
   }

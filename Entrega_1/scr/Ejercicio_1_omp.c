@@ -15,7 +15,7 @@ double dwalltime();
 void print_m(double *,int);
 unsigned int N;
 int total = 1;
-double *A,*R;
+double *A,*B,*R;
 
 int main(int argc, char *argv[])
 {
@@ -49,6 +49,7 @@ int main(int argc, char *argv[])
 
   //Aloca memoria para las matrices
   A=(double*)malloc(sizeof(double)*N*N);
+  B=(double*)malloc(sizeof(double)*N*N);
   R=(double*)malloc(sizeof(double)*N*N);
 
   //Inicializa las matrices A, B,C en 1
@@ -82,6 +83,14 @@ int main(int argc, char *argv[])
    printf("\n" );
   }
 */
+/* TRANSPUESTA */
+  for(i=0;i<N;i++)
+  {
+   for(j=0;j<N;j++)
+   {
+    B[i+N*j] = A[i*N+j];
+   }
+  }
 /* MULTIPLICACION */
 for(i=0;i<N;i++)
 {
@@ -89,7 +98,7 @@ for(i=0;i<N;i++)
   {
    for(k=0;k<N;k++)
    {
-        R[i*N+j] =  R[i*N+j] + (A[i*N+k])*(A[j+k*N]);
+        R[i*N+j] =  R[i*N+j] + (A[i*N+k])*(B[k+j*N]);
    }
   }
 }
@@ -108,16 +117,24 @@ for(i=0;i<N;i++)
  }
 }
 timetick = dwalltime();
+#pragma omp parallel for collapse(2)
+for(i=0;i<N;i++)
+{
+ for(j=0;j<N;j++)
+ {
+  B[i+N*j] = A[i*N+j];
+ }
+}
 #pragma omp parallel for collapse(3)
 for(i=0;i<N;i++)
 {
-  for(j=0;j<N;j++)
+ for(j=0;j<N;j++)
+ {
+  for(k=0;k<N;k++)
   {
-   for(k=0;k<N;k++)
-   {
-        R[i*N+j] =  R[i*N+j] + (A[i*N+k])*(A[j+k*N]);
-   }
+       R[i*N+j] =  R[i*N+j] + (A[i*N+k])*(B[k+j*N]);
   }
+ }
 }
 time_parallel = dwalltime() - timetick;
 //printf("Matriz resultante\n");
@@ -129,6 +146,7 @@ fprintf(fp, "|%.3f\t|%.3f\t|%.3f\t",time_parallel,speedup,speedup/numThreads);
 fprintf(fp,"|%s\t|\n",cpu_id());
 fclose(fp);
 free(A);
+free(B);
 free(R);
 }
 

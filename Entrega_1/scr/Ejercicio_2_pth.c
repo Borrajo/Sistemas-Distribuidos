@@ -595,9 +595,10 @@ for ( t = 0; t < numThreads; t++)
 printf("promedio de B %.2f / %d = %.2f\n",sumB,N*N, b);
 printf("ul = %.2f\n",ul);*/
 /* -- Fin de calculo del promedio de B --*/
-time_secuencial = dwalltime() - timetick;
-//printf("Tiempo en segundos secuencial %f \nPromedio : %.2f\n", time_secuencial,sum/cantidad);
-printf("Tiempo en segundos Paralelo %f \n", time_secuencial);
+time_parallel = dwalltime() - timetick;
+printf("Tiempo en segundos paralelo %f \n", time_parallel);
+speedup = time_secuencial/time_parallel;
+printf("SpeedUp con %d hilos: %f \n",numThreads,speedup);
 /*printf("Matriz DU\n" );
 print_m(DU,N);
 printf("Matriz F\n" );

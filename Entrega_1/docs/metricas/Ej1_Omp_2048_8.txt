@@ -1,0 +1,2 @@
+|N	|pth	|t_sec	|t_par	|sp_Up	|efic	|CPU	|
+|2048	|8	|306.668	|0.000	|1332912.492	|166614.062	|       Intel(R) Core(TM) i3-3217U CPU @ 1.80GHz	|

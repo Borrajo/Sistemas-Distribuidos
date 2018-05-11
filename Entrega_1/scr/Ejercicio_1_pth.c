@@ -16,6 +16,7 @@ void print_m(double *,int);
 unsigned int N;
 int total = 1;
 int num[]= {0,1,2,3,4,5,6,7};
+void* trasponer(void *arg);
 void* multiplicacion(void *arg);
 double *A,*B,*R;
 
@@ -123,6 +124,16 @@ for(i=0;i<N;i++)
 timetick = dwalltime();
 for ( t = 0; t < numThreads; t++)
 {
+  pthread_create(&Hilos[t], NULL, trasponer, (void*)&num[t]);
+}
+
+for ( t = 0; t < numThreads; t++)
+{
+  pthread_join(Hilos[t],NULL);
+}
+
+for ( t = 0; t < numThreads; t++)
+{
   pthread_create(&Hilos[t], NULL, multiplicacion, (void*)&num[t]);
 }
 
@@ -145,7 +156,7 @@ free(B);
 free(R);
 }
 
-void *multiplicacion(void *arg)
+void *trasponer(void *arg)
 {
   int id = *(int*)arg;
   int i,j,k ;
@@ -158,6 +169,14 @@ void *multiplicacion(void *arg)
     B[i+N*j] = A[i*N+j];
    }
   }
+  pthread_exit(NULL);
+}
+
+void *multiplicacion(void *arg)
+{
+  int id = *(int*)arg;
+  int i,j,k ;
+  //printf("\nid: %d , desde: %d, hasta: %d\n ",id,id*total,(id+1)*total);
   for(i=id*total;i<(id+1)*total;i++)
   {
    for(j=0;j<N;j++)

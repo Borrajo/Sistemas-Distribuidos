@@ -13,6 +13,12 @@ Evaluar N=512, 1024 y 2048.
     ¬b (L.B.E + D.U.F) de esta forma pueden calcularse LBE por un lado, DUF por otro, luego sumarla
     y al final multiplicar por el promedio
  */
+/* Almacenamiento de las matrices en memoria */
+/*  A:fila  E:colm
+    B:colm  F:colm
+    C:colm  L:fila
+    D:fila  U:colm
+*/
 #include<stdio.h>
 #include<stdlib.h>
 #include<pthread.h>
@@ -22,14 +28,18 @@ Evaluar N=512, 1024 y 2048.
 void print_m(double *,int);
 void *promedio(void *arg);
 void *multiplicacion(void *arg);
+void *multp_triangular_U(void *arg);
+void *multp_triangular_L(void *arg);
+void *multp_DU_F(void *arg);
 
 unsigned int N;
-double sum = 0;
+double sumU = 0;
+double sumL = 0;
 int total = 1;
 int num[]= {0,1,2,3,4,5,6,7};
 pthread_mutex_t mutexsum;
-double *A,*B,*C,*D,*E,*F;
-unsigned int b,u,l;
+double *A,*B,*C,*D,*E,*F,*DU,*DUF,*U,*L;
+double b,u,l;
 
 void *promedio(void *arg)
 {
@@ -45,11 +55,80 @@ void *promedio(void *arg)
   }
   //acceso al mutex para actualizar el total
   pthread_mutex_lock (&mutexsum);
-  sum = sum + parcial;
+  sumU = sumU + parcial;
   pthread_mutex_unlock (&mutexsum);
   pthread_exit(NULL);
 }
 
+void *multp_triangular_L(void *arg)
+{
+  /* para acceder a la posicion U[i,j] = U[i*N+j-(i*(i+1))/2]*/
+  int id = *(int*)arg;
+  int i,j,k;
+  for(i=id*total;i<(id+1)*total;i++)
+  {
+   for(j=0;j<N;j++)
+   {
+    for(k=0;k<N;k++)
+    {
+      if(k>=i) // con esto evita los ceros de las filas
+      {
+        DUF[i*N+j] =  DUF[i*N+j] + (U[i*N+k-(i*(i+1))/2])*(F[k+j*N]);
+      }
+    }
+   }
+  }
+  pthread_exit(NULL);
+}
+
+void *multp_triangular_U(void *arg)
+{
+  /* para acceder a la posicion L[i,j] = U[i*N+j-(i*(i+1))/2]*/
+  int id = *(int*)arg;
+  int i,j,k;
+  double parcial = 0;
+  for(i=id*total;i<(id+1)*total;i++)
+  {
+   for(j=0;j<N;j++)
+   {
+     if(i<=j)
+     {
+       parcial = parcial + U[i+j*(j+1)/2];
+       //printf("U(%d)[%d,%d]=%.0f\n",id,i,j,U[i+j*(j+1)/2]);
+     }
+     for(k=0;k<N;k++)
+     {
+       if(k<=j) // con esto evita los ceros de las filas
+       {
+         DU[i*N+j] =  DU[i*N+j] + (D[i*N+k])*(U[k+(j*(j+1))/2]);
+       }
+     }
+   }
+  }
+  //acceso al mutex para actualizar el total
+  pthread_mutex_lock (&mutexsum);
+  sumU = sumU + parcial;
+  pthread_mutex_unlock (&mutexsum);
+  pthread_exit(NULL);
+}
+
+void *multp_DU_F(void *arg)
+{
+  int id = *(int*)arg;
+  int i,j,k ;
+  //printf("\nid: %d , desde: %d, hasta: %d\n ",id,id*total,(id+1)*total);
+  for(i=id*total;i<(id+1)*total;i++)
+  {
+   for(j=0;j<N;j++)
+   {
+    for(k=0;k<N;k++)
+    {
+      DUF[i*N+j] =  DUF[i*N+j] + (DU[i*N+k])*(F[k+j*N]);
+    }
+   }
+  }
+  pthread_exit(NULL);
+}
 void print_m(double *M, int dim)
 {
   int i,j;
@@ -100,32 +179,63 @@ int main(int argc, char *argv[])
   D=(double*)malloc(sizeof(double)*N*N);
   E=(double*)malloc(sizeof(double)*N*N);
   F=(double*)malloc(sizeof(double)*N*N);
+  DU=(double*)malloc(sizeof(double)*N*N);
+  DUF=(double*)malloc(sizeof(double)*N*N);
+  U=(double*)malloc(sizeof(double)*(N*(N+1)/2));
+  L=(double*)malloc(sizeof(double)*(N*(N+1)/2));
   //Inicializa las matrices A
  for(i=0;i<N;i++)
  {
   for(j=0;j<N;j++)
   {
-    B[i*N+j]=rand()%100+1;
+    D[i*N+j]=rand()%10+1;
+    F[i+j*N]=rand()%10+1;
+    U[i+j*(j+1)/2] = rand()%5+1;
+    DUF[i*N+j]=0;
   }
  }
-//Promedio de matriz de forma paralela
-pthread_mutex_init(&mutexsum, NULL);
+ printf("Matriz D\n" );
+ print_m(D,N);
+ printf("Matriz U\n" );
+ print_m(U,N);
+ printf("Matriz DUF\n" );
+ print_m(DUF,N);
+//Inicia el tiempo
 timetick = dwalltime();
-//Se crean los hilos para calcular el promedio de B
+//Se crean los hilos para calcular el DU
+pthread_mutex_init(&mutexsum, NULL);
 for ( t = 0; t < numThreads; t++)
 {
-  pthread_create(&Hilos[t], NULL, promedio, (void*)&num[t]);
+  pthread_create(&Hilos[t], NULL, multp_triangular_U, (void*)&num[t]);
 }
 for ( t = 0; t < numThreads; t++)
 {
   pthread_join(Hilos[t],NULL);
 }
-pthread_mutex_destroy(&mutexsum);
-b = sum/cantidad;
+u = sumU/(N*(N+1)/2);
+//MULTIPLICACION DE DU*F
+for ( t = 0; t < numThreads; t++)
+{
+  pthread_create(&Hilos[t], NULL, multp_DU_F, (void*)&num[t]);
+}
+for ( t = 0; t < numThreads; t++)
+{
+  pthread_join(Hilos[t],NULL);
+}
+printf("promedio de %.2f / %d = %.2f\n",sumU,(N*(N+1)/2), u);
 /* -- Fin de calculo del promedio de B --*/
-time_secuencial = dwalltime() - timetick;
-printf("Tiempo en segundos secuencial %f \nPromedio : %.2f\n", time_secuencial,sum/cantidad);
+/*time_secuencial = dwalltime() - timetick;
+printf("Tiempo en segundos secuencial %f \nPromedio : %.2f\n", time_secuencial,sum/cantidad);*/
+printf("Matriz DU\n" );
+print_m(DU,N);
+printf("Matriz F\n" );
+print_m(F,N);
+printf("Matriz DUF\n" );
+print_m(DUF,N);
 pthread_exit(NULL);
 fclose(fp);
-free(A);
+free(D);
+free(DU);
+free(U);
+free(DUF);
 }

@@ -39,8 +39,8 @@ double sumB = 0;
 int total = 1;
 int num[]= {0,1,2,3,4,5,6,7};
 pthread_mutex_t mutexsum;
-double *A,*B,*C,*D,*E,*F,*DU,*DUF,*LB,*U,*L;
-double b,u,l;
+double *A,*B,*C,*D,*E,*F,*DU,*DUF,*LB,*AA,*AAC,*AT,*U,*L;
+double b,u,l,ul;
 
 void *promedio(void *arg)
 {
@@ -155,6 +155,74 @@ void *multp_LB_E(void *arg)
   pthread_exit(NULL);
 }
 
+void *trasponer(void *arg)
+{
+  int id = *(int*)arg;
+  int i,j,k ;
+  //printf("\nid: %d , desde: %d, hasta: %d\n ",id,id*total,(id+1)*total);
+  /* TRANSPUESTA */
+  for(i=id*total;i<(id+1)*total;i++)
+  {
+   for(j=0;j<N;j++)
+   {
+    AT[i+N*j] = A[i*N+j];
+   }
+  }
+  pthread_exit(NULL);
+}
+
+void *multp_A_A(void *arg)
+{
+  int id = *(int*)arg;
+  int i,j,k ;
+  //printf("\nid: %d , desde: %d, hasta: %d\n ",id,id*total,(id+1)*total);
+  for(i=id*total;i<(id+1)*total;i++)
+  {
+   for(j=0;j<N;j++)
+   {
+    for(k=0;k<N;k++)
+    {
+      AA[i*N+j] = AA[i*N+j] + (A[i*N+k])*(AT[k+j*N]);
+    }
+   }
+  }
+  pthread_exit(NULL);
+}
+
+void *multp_AA_C(void *arg)
+{
+  int id = *(int*)arg;
+  int i,j,k ;
+  //printf("\nid: %d , desde: %d, hasta: %d\n ",id,id*total,(id+1)*total);
+  for(i=id*total;i<(id+1)*total;i++)
+  {
+   for(j=0;j<N;j++)
+   {
+    for(k=0;k<N;k++)
+    {
+      AAC[i*N+j] =  AAC[i*N+j] + (AA[i*N+k] * C[k+j*N]);
+    }
+    AAC[i*N+j] =  AAC[i*N+j]*ul;
+   }
+  }
+  pthread_exit(NULL);
+}
+
+void *sum_todo(void *arg)
+{
+  int id = *(int*)arg;
+  int i,j,k ;
+  //printf("\nid: %d , desde: %d, hasta: %d\n ",id,id*total,(id+1)*total);
+  for(i=id*total;i<(id+1)*total;i++)
+  {
+   for(j=0;j<N;j++)
+   {
+     DUF[i*N+j] =  DUF[i*N+j] + AAC[i*N+j];
+   }
+  }
+  pthread_exit(NULL);
+}
+
 void print_m(double *M, int dim)
 {
   int i,j;
@@ -255,20 +323,27 @@ int main(int argc, char *argv[])
   DU=(double*)malloc(sizeof(double)*N*N);
   DUF=(double*)malloc(sizeof(double)*N*N);
   LB=(double*)malloc(sizeof(double)*N*N);
+  AA=(double*)malloc(sizeof(double)*N*N);
+  AT=(double*)malloc(sizeof(double)*N*N);
+  AAC=(double*)malloc(sizeof(double)*N*N);
   U=(double*)malloc(sizeof(double)*(N*(N+1)/2));
   L=(double*)malloc(sizeof(double)*(N*(N+1)/2));
   //Inicializa las matrices A
  for(i=0;i<N;i++)
  {
   for(j=0;j<N;j++)
-  {
-    D[i*N+j]=rand()%10+1;
+  { D[i*N+j]=rand()%10+1;
     F[i+j*N]=rand()%10+1;
     B[i+j*N]=rand()%10+1;
     E[i+j*N]=rand()%10+1;
+    A[i*N+j]=rand()%10+1;
+    C[i+j*N]=rand()%10+1;
     DU[i*N+j]=0;
     DUF[i*N+j]=0;
     LB[i*N+j]=0;
+    AA[i*N+j]=0;
+    AT[i+j*N]=0;
+    AAC[i*N+j]=0;
   }
   for(j=i;j<N;j++){
     U[i+(j*(j+1))/2] = rand()%5+1;    
@@ -277,7 +352,132 @@ int main(int argc, char *argv[])
     L[j+(i*(i+1))/2] = rand()%5+1; 
   }
  }
- printf("Matriz D\n" );
+
+ /* CODIGO SECUENCIAL */
+ 
+ 
+ //Inicia el tiempo
+ timetick = dwalltime();
+ 
+ //DU
+ for(i=0;i<N;i++)
+  {
+   for(j=0;j<N;j++)
+   {
+     if(i<=j)
+     {
+       sumU = sumU + U[i+j*(j+1)/2];
+     }
+     for(k=0;k<=j;k++)
+     {
+         DU[i*N+j] =  DU[i*N+j] + (D[i*N+k])*(U[k+(j*(j+1))/2]);
+     }
+   }
+  }
+
+ u = sumU/(N*N);
+
+ //DUF
+ for(i=0;i<N;i++)
+  {
+   for(j=0;j<N;j++)
+   {
+    for(k=0;k<N;k++)
+    {
+      DUF[i*N+j] =  DUF[i*N+j] + (DU[i*N+k] * F[k+j*N]);
+    }
+   }
+  }
+
+ //LB
+ for(i=0;i<N;i++)
+  {
+   for(j=0;j<N;j++)
+   {
+    if(i>=j){
+      sumL = sumL + L[j+(i*(i+1))/2];
+    }
+    sumB = sumB + B[i+j*N];
+    for(k=0;k<=i;k++)
+    {
+        LB[i*N+j] =  LB[i*N+j] + (L[k+(i*(i+1))/2] * B[k+j*N]);
+    }
+   }
+  }
+
+ //b(LBE+DUF)
+ for(i=0;i<N;i++)
+  {
+   for(j=0;j<N;j++)
+   {
+    for(k=0;k<N;k++)
+    {
+      DUF[i*N+j] =  DUF[i*N+j] + (LB[i*N+k] * E[k+j*N]);
+    }
+    DUF[i*N+j] =  DUF[i*N+j]*b;
+   }
+  }
+
+ //Transpuesta de A
+ for(i=0;i<N;i++)
+  {
+   for(j=0;j<N;j++)
+   {
+    AT[i+N*j] = A[i*N+j];
+   }
+  }
+
+ //AA
+ for(i=0;i<N;i++)
+  {
+   for(j=0;j<N;j++)
+   {
+    for(k=0;k<N;k++)
+    {
+      AA[i*N+j] = AA[i*N+j] + (A[i*N+k])*(AT[k+j*N]);
+    }
+   }
+  }
+
+ //ul(AAC)
+ for(i=0;i<N;i++)
+  {
+   for(j=0;j<N;j++)
+   {
+    for(k=0;k<N;k++)
+    {
+      AAC[i*N+j] =  AAC[i*N+j] + (AA[i*N+k] * C[k+j*N]);
+    }
+    AAC[i*N+j] =  AAC[i*N+j]*ul;
+   }
+  }
+
+ //SUMA FINAL
+ for(i=0;i<N;i++)
+  {
+   for(j=0;j<N;j++)
+   {
+     DUF[i*N+j] =  DUF[i*N+j] + AAC[i*N+j];
+   }
+  }
+ 
+ time_secuencial = dwalltime() - timetick;
+ printf("Tiempo en segundos secuencial %f \n", time_secuencial);
+
+ //Resetea las matrices
+ for(i=0;i<N;i++)
+ {
+  for(j=0;j<N;j++)
+  { 
+    DU[i*N+j]=0;
+    DUF[i*N+j]=0;
+    LB[i*N+j]=0;
+    AA[i*N+j]=0;
+    AT[i+j*N]=0;
+    AAC[i*N+j]=0;
+  }
+ }
+ /*printf("Matriz D\n" );
  print_m(D,N);
  printf("Matriz U\n" );
  print_mU(U,N);
@@ -289,6 +489,10 @@ int main(int argc, char *argv[])
  print_mT(B,N);
  printf("Matriz E\n" );
  print_mT(E,N);
+ printf("Matriz A\n" );
+ print_m(A,N);
+ printf("Matriz C\n" );
+ print_mT(C,N);*/
 //Inicia el tiempo
 timetick = dwalltime();
 //Se crean los hilos para calcular el DU
@@ -301,7 +505,8 @@ for ( t = 0; t < numThreads; t++)
 {
   pthread_join(Hilos[t],NULL);
 }
-u = sumU/(N*(N+1)/2);
+//u = sumU/(N*(N+1)/2);
+u = sumU/(N*N);
 
 //MULTIPLICACION DE DU*F
 for ( t = 0; t < numThreads; t++)
@@ -312,9 +517,10 @@ for ( t = 0; t < numThreads; t++)
 {
   pthread_join(Hilos[t],NULL);
 }
-printf("promedio de U %.2f / %d = %.2f\n",sumU,(N*(N+1)/2), u);
-printf("Matriz DUF\n" );
-print_m(DUF,N);
+//printf("promedio de U %.2f / %d = %.2f\n",sumU,(N*(N+1)/2), u);
+//printf("promedio de U %.2f / %d = %.2f\n",sumU,N*N, u);
+/*printf("Matriz DUF\n" );
+print_m(DUF,N);*/
 
 //MULTIPLICACION DE L*B
 for ( t = 0; t < numThreads; t++)
@@ -325,10 +531,12 @@ for ( t = 0; t < numThreads; t++)
 {
   pthread_join(Hilos[t],NULL);
 }
-l = sumL/(N*(N+1)/2);
+//l = sumL/(N*(N+1)/2);
+l = sumL/(N*N);
+ul = u*l;
 b = sumB/(N*N);
 
-//MULTIPLICACION DE LB*E
+//MULTIPLICACION DE LB*E, Suma a DUF y Multiplicacion por el promedio de B
 for ( t = 0; t < numThreads; t++)
 {
   pthread_create(&Hilos[t], NULL, multp_LB_E, (void*)&num[t]);
@@ -338,22 +546,68 @@ for ( t = 0; t < numThreads; t++)
   pthread_join(Hilos[t],NULL);
 }
 
-printf("promedio de L %.2f / %d = %.2f\n",sumL,(N*(N+1)/2), l);
+
+/*printf("Matriz DUFLBE\n" );
+print_m(DUF,N);*/
+
+//TRANSPUESTA DE A
+for ( t = 0; t < numThreads; t++)
+{
+  pthread_create(&Hilos[t], NULL, trasponer, (void*)&num[t]);
+}
+for ( t = 0; t < numThreads; t++)
+{
+  pthread_join(Hilos[t],NULL);
+}
+
+//MULTIPLICACION DE A*A
+for ( t = 0; t < numThreads; t++)
+{
+  pthread_create(&Hilos[t], NULL, multp_A_A, (void*)&num[t]);
+}
+for ( t = 0; t < numThreads; t++)
+{
+  pthread_join(Hilos[t],NULL);
+}
+
+//MULTIPLICACION DE AA*C
+for ( t = 0; t < numThreads; t++)
+{
+  pthread_create(&Hilos[t], NULL, multp_AA_C, (void*)&num[t]);
+}
+for ( t = 0; t < numThreads; t++)
+{
+  pthread_join(Hilos[t],NULL);
+}
+
+//SUMA DE AAC + RESTO
+for ( t = 0; t < numThreads; t++)
+{
+  pthread_create(&Hilos[t], NULL, sum_todo, (void*)&num[t]);
+}
+for ( t = 0; t < numThreads; t++)
+{
+  pthread_join(Hilos[t],NULL);
+}
+
+//printf("promedio de L %.2f / %d = %.2f\n",sumL,(N*(N+1)/2), l);
+/*printf("promedio de L %.2f / %d = %.2f\n",sumL,N*N, l);
 printf("promedio de B %.2f / %d = %.2f\n",sumB,N*N, b);
+printf("ul = %.2f\n",ul);*/
 /* -- Fin de calculo del promedio de B --*/
 time_secuencial = dwalltime() - timetick;
 //printf("Tiempo en segundos secuencial %f \nPromedio : %.2f\n", time_secuencial,sum/cantidad);
-//printf("Tiempo en segundos secuencial %f \n", time_secuencial);
+printf("Tiempo en segundos Paralelo %f \n", time_secuencial);
 /*printf("Matriz DU\n" );
 print_m(DU,N);
 printf("Matriz F\n" );
 print_mT(F,N);
-printf("Matriz DUF\n" );
-print_m(DUF,N);*/
 printf("Matriz LB\n" );
-print_m(LB,N);
-printf("Matriz DUF\n" );
-print_m(DUF,N);
+print_m(LB,N);*/
+/*printf("Matriz AAC\n" );
+print_m(AAC,N);
+printf("Matriz TOTAL\n" );
+print_m(DUF,N);*/
 pthread_exit(NULL);
 fclose(fp);
 free(D);

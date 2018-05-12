@@ -404,6 +404,10 @@ int main(int argc, char *argv[])
     }
    }
   }
+ 
+ l = sumL/(N*N);
+ b = sumB/(N*N);
+ ul = u*l;
 
  //b(LBE+DUF)
  for(i=0;i<N;i++)
@@ -451,6 +455,7 @@ int main(int argc, char *argv[])
     AAC[i*N+j] =  AAC[i*N+j]*ul;
    }
   }
+ 
 
  //SUMA FINAL
  for(i=0;i<N;i++)
@@ -463,6 +468,9 @@ int main(int argc, char *argv[])
  
  time_secuencial = dwalltime() - timetick;
  printf("Tiempo en segundos secuencial %f \n", time_secuencial);
+ 
+/*printf("Matriz TOTAL\n" );
+print_m(DUF,N);*/
 
  //Resetea las matrices
  for(i=0;i<N;i++)
@@ -477,6 +485,12 @@ int main(int argc, char *argv[])
     AAC[i*N+j]=0;
   }
  }
+ sumB = 0;
+ sumU = 0;
+ sumL = 0;
+ l = 0;
+ u = 0;
+ ul = 0;
  /*printf("Matriz D\n" );
  print_m(D,N);
  printf("Matriz U\n" );
@@ -606,8 +620,8 @@ print_mT(F,N);
 printf("Matriz LB\n" );
 print_m(LB,N);*/
 /*printf("Matriz AAC\n" );
-print_m(AAC,N);
-printf("Matriz TOTAL\n" );
+print_m(AAC,N);*/
+/*printf("Matriz TOTAL\n" );
 print_m(DUF,N);*/
 pthread_exit(NULL);
 fclose(fp);

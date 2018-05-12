@@ -87,7 +87,7 @@ void *multp_triangular_L(void *arg)
   sumL = sumL + parcialL;
   sumB = sumB + parcialB;
   pthread_mutex_unlock (&mutexsum);
-  pthread_exit(NULL); 
+  pthread_exit(NULL);
 }
 
 void *multp_triangular_U(void *arg)
@@ -346,19 +346,19 @@ int main(int argc, char *argv[])
     AAC[i*N+j]=0;
   }
   for(j=i;j<N;j++){
-    U[i+(j*(j+1))/2] = rand()%5+1;    
+    U[i+(j*(j+1))/2] = rand()%5+1;
   }
   for(j=0;j<=i;j++){
-    L[j+(i*(i+1))/2] = rand()%5+1; 
+    L[j+(i*(i+1))/2] = rand()%5+1;
   }
  }
 
  /* CODIGO SECUENCIAL */
- 
- 
+
+
  //Inicia el tiempo
  timetick = dwalltime();
- 
+
  //DU
  for(i=0;i<N;i++)
   {
@@ -404,7 +404,7 @@ int main(int argc, char *argv[])
     }
    }
   }
- 
+
  l = sumL/(N*N);
  b = sumB/(N*N);
  ul = u*l;
@@ -455,7 +455,7 @@ int main(int argc, char *argv[])
     AAC[i*N+j] =  AAC[i*N+j]*ul;
    }
   }
- 
+
 
  //SUMA FINAL
  for(i=0;i<N;i++)
@@ -465,10 +465,10 @@ int main(int argc, char *argv[])
      DUF[i*N+j] =  DUF[i*N+j] + AAC[i*N+j];
    }
   }
- 
+
  time_secuencial = dwalltime() - timetick;
  printf("Tiempo en segundos secuencial %f \n", time_secuencial);
- 
+
 /*printf("Matriz TOTAL\n" );
 print_m(DUF,N);*/
 
@@ -476,7 +476,7 @@ print_m(DUF,N);*/
  for(i=0;i<N;i++)
  {
   for(j=0;j<N;j++)
-  { 
+  {
     DU[i*N+j]=0;
     DUF[i*N+j]=0;
     LB[i*N+j]=0;
@@ -521,7 +521,8 @@ for ( t = 0; t < numThreads; t++)
 }
 //u = sumU/(N*(N+1)/2);
 u = sumU/(N*N);
-
+free(D);
+free(U);
 //MULTIPLICACION DE DU*F
 for ( t = 0; t < numThreads; t++)
 {
@@ -531,6 +532,8 @@ for ( t = 0; t < numThreads; t++)
 {
   pthread_join(Hilos[t],NULL);
 }
+free(DU);
+free(F);
 //printf("promedio de U %.2f / %d = %.2f\n",sumU,(N*(N+1)/2), u);
 //printf("promedio de U %.2f / %d = %.2f\n",sumU,N*N, u);
 /*printf("Matriz DUF\n" );
@@ -549,7 +552,8 @@ for ( t = 0; t < numThreads; t++)
 l = sumL/(N*N);
 ul = u*l;
 b = sumB/(N*N);
-
+free(B);
+free(L);
 //MULTIPLICACION DE LB*E, Suma a DUF y Multiplicacion por el promedio de B
 for ( t = 0; t < numThreads; t++)
 {
@@ -559,7 +563,8 @@ for ( t = 0; t < numThreads; t++)
 {
   pthread_join(Hilos[t],NULL);
 }
-
+free(LB);
+free(E);
 
 /*printf("Matriz DUFLBE\n" );
 print_m(DUF,N);*/
@@ -583,7 +588,8 @@ for ( t = 0; t < numThreads; t++)
 {
   pthread_join(Hilos[t],NULL);
 }
-
+free(A);
+free(AT);
 //MULTIPLICACION DE AA*C
 for ( t = 0; t < numThreads; t++)
 {
@@ -593,7 +599,8 @@ for ( t = 0; t < numThreads; t++)
 {
   pthread_join(Hilos[t],NULL);
 }
-
+free(AA);
+free(C);
 //SUMA DE AAC + RESTO
 for ( t = 0; t < numThreads; t++)
 {
@@ -625,8 +632,6 @@ print_m(AAC,N);*/
 print_m(DUF,N);*/
 pthread_exit(NULL);
 fclose(fp);
-free(D);
-free(DU);
-free(U);
 free(DUF);
+free(AAC);
 }

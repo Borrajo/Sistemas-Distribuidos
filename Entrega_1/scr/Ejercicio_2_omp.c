@@ -122,7 +122,7 @@ int main(int argc, char *argv[])
   int numThreads = atoi(argv[2]);
   total = N/numThreads;
   cantidad = N*N;
-  sprintf(filename, "../docs/metricas/Ej2_Pth_%d_%d.txt", N,numThreads);
+  sprintf(filename, "../docs/metricas/Ej2_Omp_%d_%d.txt", N,numThreads);
   fp = fopen( filename, "a+");
   // si el archivo está vacio imprimimos la cabecera
   if(fgetc(fp) == EOF)
@@ -288,7 +288,7 @@ int main(int argc, char *argv[])
  
  time_secuencial = dwalltime() - timetick;
  printf("Tiempo en segundos secuencial %f \n", time_secuencial);
- 
+ fprintf(fp, "|%.3f\t",time_secuencial);
 /*printf("Matriz TOTAL\n" );
 print_m(DUF,N);*/
 
@@ -349,7 +349,8 @@ timetick = dwalltime();
   }
 
  u = sumU/(N*N);
-
+    free(D);
+    free(U);
  //DUF
  #pragma omp parallel for collapse(2) private(k)
  for(i=0;i<N;i++)
@@ -362,7 +363,8 @@ timetick = dwalltime();
     }
    }
   }
- 
+    free(DU);
+    free(F);
  //LB
  
  #pragma omp parallel for collapse(2) private(k) reduction(+:sumL,sumB)
@@ -384,7 +386,8 @@ timetick = dwalltime();
  l = sumL/(N*N);
  b = sumB/(N*N);
  ul = u*l;
-
+free(B);
+free(L);
  //b(LBE+DUF)
  #pragma omp parallel for collapse(2) private(k)
  for(i=0;i<N;i++)
@@ -398,6 +401,8 @@ timetick = dwalltime();
     DUF[i*N+j] =  DUF[i*N+j]*b;
    }
   }
+free(LB);
+free(E);
 
  //Transpuesta de A
  #pragma omp parallel for collapse(2)
@@ -421,7 +426,8 @@ timetick = dwalltime();
     }
    }
   }
-
+free(A);
+free(AT);
  //ul(AAC)
  #pragma omp parallel for collapse(2) private(k)
  for(i=0;i<N;i++)
@@ -435,7 +441,8 @@ timetick = dwalltime();
     AAC[i*N+j] =  AAC[i*N+j]*ul;
    }
   }
- 
+ free(AA);
+free(C);
 
  //SUMA FINAL
  #pragma omp parallel for collapse(2)
@@ -456,6 +463,8 @@ time_parallel = dwalltime() - timetick;
 printf("Tiempo en segundos paralelo %f \n", time_parallel);
 speedup = time_secuencial/time_parallel;
 printf("SpeedUp con %d hilos: %f \n",numThreads,speedup);
+fprintf(fp, "|%.3f\t|%.3f\t|%.3f\t",time_parallel,speedup,speedup/numThreads);
+fprintf(fp,"|%s\t|\n",cpu_id());
 /*printf("Matriz DU\n" );
 print_m(DU,N);
 printf("Matriz F\n" );
@@ -467,8 +476,6 @@ print_m(AAC,N);*/
 /*printf("Matriz TOTAL\n" );
 print_m(DUF,N);*/
 fclose(fp);
-free(D);
-free(DU);
-free(U);
 free(DUF);
+free(AAC);
 }

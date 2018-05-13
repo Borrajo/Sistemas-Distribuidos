@@ -1,2 +1,0 @@
-|N	|pth	|t_sec	|t_par	|sp_Up	|efic	|CPU	|
-|128	|4	|128	|4	|128	|4	|128	|4	

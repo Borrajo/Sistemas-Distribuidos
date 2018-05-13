@@ -468,6 +468,7 @@ int main(int argc, char *argv[])
 
  time_secuencial = dwalltime() - timetick;
  printf("Tiempo en segundos secuencial %f \n", time_secuencial);
+ fprintf(fp, "|%.3f\t",time_secuencial);
 
 /*printf("Matriz TOTAL\n" );
 print_m(DUF,N);*/
@@ -620,6 +621,8 @@ time_parallel = dwalltime() - timetick;
 printf("Tiempo en segundos paralelo %f \n", time_parallel);
 speedup = time_secuencial/time_parallel;
 printf("SpeedUp con %d hilos: %f \n",numThreads,speedup);
+fprintf(fp, "|%.3f\t|%.3f\t|%.3f\t",time_parallel,speedup,speedup/numThreads);
+fprintf(fp,"|%s\t|\n",cpu_id());
 /*printf("Matriz DU\n" );
 print_m(DU,N);
 printf("Matriz F\n" );

@@ -12,7 +12,6 @@ Evaluar N=512, 1024 y 2048.
 #include"cpu.h"
 /* Time in seconds from some point in the past */
 double dwalltime();
-void print_m(double *,int);
 unsigned int N;
 int total = 1;
 double *A,*B,*R;
@@ -64,25 +63,6 @@ int main(int argc, char *argv[])
 
  timetick = dwalltime();
 
-//printf("Matriz original\n");
-//print_m(A,N);
-
-/*
- for(i=0;i<N;i++)
- {
-   for(j=0;j<N;j++)
-   {
-    for(k=0;k<N;k++)
-    {
-         printf("|(%d,%d,%d) = %.0f + %0.f * %.0f|", i,j,k , R[i*N+j] , (A[i*N+k]), (A[j+k*N]));
-	       R[i*N+j] =  R[i*N+j] + (A[i*N+k])*(A[j+k*N]);
-         printf(" = |%.0f\n",R[i*N+j]);
-    }
-    printf("(%d,%d) = %.0f\n", i,j, R[i*N+j]);
-   }
-   printf("\n" );
-  }
-*/
 /* TRANSPUESTA */
   for(i=0;i<N;i++)
   {
@@ -103,8 +83,6 @@ for(i=0;i<N;i++)
   }
 }
 time_secuencial = dwalltime() - timetick;
-//printf("Matriz resultante\n");
-//print_m(R,N);
 printf("Tiempo en segundos secuencial %f \n", time_secuencial);
 fprintf(fp, "|%.3f\t",time_secuencial);
 //Proceso en paralelo
@@ -137,8 +115,6 @@ for(i=0;i<N;i++)
  }
 }
 time_parallel = dwalltime() - timetick;
-//printf("Matriz resultante\n");
-//print_m(R,N);
 printf("Tiempo en segundos paralelo %f \n", time_parallel);
 speedup = time_secuencial/time_parallel;
 printf("SpeedUp con %d hilos: %f \n",numThreads,speedup);
@@ -148,17 +124,4 @@ fclose(fp);
 free(A);
 free(B);
 free(R);
-}
-
-void print_m(double *M, int dim)
-{
-  int i,j;
-  for(i=0;i<dim;i++)
-  {
-   for(j=0;j<dim;j++)
-   {
-     printf("|%.0f\t",M[i*dim+j]);
-   }
-   printf("|\n");
-  }
 }

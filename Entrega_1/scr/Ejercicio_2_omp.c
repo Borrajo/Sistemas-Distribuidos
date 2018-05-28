@@ -18,6 +18,7 @@ Evaluar N=512, 1024 y 2048.
     B:colm  F:colm
     C:colm  L:fila
     D:fila  U:colm
+	At:colm
 */
 #include<stdio.h>
 #include<stdlib.h>
@@ -25,82 +26,14 @@ Evaluar N=512, 1024 y 2048.
 #include"tiempo.h"
 #include"cpu.h"
 
-void print_m(double *,int);
-void *promedio(void *arg);
-void *multiplicacion(void *arg);
-void *multp_triangular_U(void *arg);
-void *multp_triangular_L(void *arg);
-void *multp_DU_F(void *arg);
-
 unsigned int N;
 double sumU = 0;
 double sumL = 0;
 double sumB = 0;
 int total = 1;
 int num[]= {0,1,2,3,4,5,6,7};
-pthread_mutex_t mutexsum;
 double *A,*B,*C,*D,*E,*F,*DU,*DUF,*LB,*AA,*AAC,*AT,*U,*L;
 double b,u,l,ul;
-
-void print_m(double *M, int dim)
-{
-  int i,j;
-  for(i=0;i<dim;i++)
-  {
-   for(j=0;j<dim;j++)
-   {
-     printf("|%.0f\t",M[i*dim+j]);
-   }
-   printf("|\n");
-  }
-}
-
-void print_mT(double *M, int dim)
-{
-  int i,j;
-  for(i=0;i<dim;i++)
-  {
-   for(j=0;j<dim;j++)
-   {
-     printf("|%.0f\t",M[i+j*dim]);
-   }
-   printf("|\n");
-  }
-}
-
-void print_mU(double *M, int dim)
-{
-  int i,j;
-  for(i=0;i<dim;i++)
-  {
-   for(j=0;j<dim;j++)
-   {
-     if(i<=j){
-      printf("|%.0f\t",M[i+(j*(j+1))/2]);
-     }else{
-      printf("|0\t");
-     }
-   }
-   printf("|\n");
-  }
-}
-
-void print_mL(double *M, int dim)
-{
-  int i,j;
-  for(i=0;i<dim;i++)
-  {
-   for(j=0;j<dim;j++)
-   {
-     if(i>=j){
-      printf("|%.0f\t",M[j+(i*(i+1))/2]);
-     }else{
-      printf("|0\t");
-     }
-   }
-   printf("|\n");
-  }
-}
 
 int main(int argc, char *argv[])
 {
@@ -173,7 +106,6 @@ int main(int argc, char *argv[])
  }
 
  /* CODIGO SECUENCIAL */
- 
  
  //Inicia el tiempo
  timetick = dwalltime();
@@ -289,8 +221,6 @@ int main(int argc, char *argv[])
  time_secuencial = dwalltime() - timetick;
  printf("Tiempo en segundos secuencial %f \n", time_secuencial);
  fprintf(fp, "|%.3f\t",time_secuencial);
-/*printf("Matriz TOTAL\n" );
-print_m(DUF,N);*/
 
  //Resetea las matrices
  for(i=0;i<N;i++)
@@ -311,22 +241,7 @@ print_m(DUF,N);*/
  l = 0;
  u = 0;
  ul = 0;
- /*printf("Matriz D\n" );
- print_m(D,N);
- printf("Matriz U\n" );
- print_mU(U,N);
- printf("Matriz F\n" );
- print_mT(F,N);
- printf("Matriz L\n" );
- print_mL(L,N);
- printf("Matriz B\n" );
- print_mT(B,N);
- printf("Matriz E\n" );
- print_mT(E,N);
- printf("Matriz A\n" );
- print_m(A,N);
- printf("Matriz C\n" );
- print_mT(C,N);*/
+ 
 //Inicia el tiempo
 timetick = dwalltime();
 //Se crean los hilos para calcular el DU
@@ -454,27 +369,13 @@ free(C);
    }
   }
 
-//printf("promedio de L %.2f / %d = %.2f\n",sumL,(N*(N+1)/2), l);
-/*printf("promedio de L %.2f / %d = %.2f\n",sumL,N*N, l);
-printf("promedio de B %.2f / %d = %.2f\n",sumB,N*N, b);
-printf("ul = %.2f\n",ul);*/
-/* -- Fin de calculo del promedio de B --*/
 time_parallel = dwalltime() - timetick;
 printf("Tiempo en segundos paralelo %f \n", time_parallel);
 speedup = time_secuencial/time_parallel;
 printf("SpeedUp con %d hilos: %f \n",numThreads,speedup);
 fprintf(fp, "|%.3f\t|%.3f\t|%.3f\t",time_parallel,speedup,speedup/numThreads);
 fprintf(fp,"|%s\t|\n",cpu_id());
-/*printf("Matriz DU\n" );
-print_m(DU,N);
-printf("Matriz F\n" );
-print_mT(F,N);
-printf("Matriz LB\n" );
-print_m(LB,N);*/
-/*printf("Matriz AAC\n" );
-print_m(AAC,N);*/
-/*printf("Matriz TOTAL\n" );
-print_m(DUF,N);*/
+
 fclose(fp);
 free(DUF);
 free(AAC);

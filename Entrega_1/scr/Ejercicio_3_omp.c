@@ -86,10 +86,3 @@ int main(int argc, char *argv[]){
   fclose(fp);
   free(V);
 }
-
-void print_v(int *M, int dim){
-  int j;
-  for(j=0;j<dim;j++){
-    printf("|%d\t",M[j]);
-  }
-}

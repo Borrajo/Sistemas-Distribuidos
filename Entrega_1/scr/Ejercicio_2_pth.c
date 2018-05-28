@@ -18,6 +18,7 @@ Evaluar N=512, 1024 y 2048.
     B:colm  F:colm
     C:colm  L:fila
     D:fila  U:colm
+	At:colm
 */
 #include<stdio.h>
 #include<stdlib.h>
@@ -25,8 +26,6 @@ Evaluar N=512, 1024 y 2048.
 #include"tiempo.h"
 #include"cpu.h"
 
-void print_m(double *,int);
-void *promedio(void *arg);
 void *multiplicacion(void *arg);
 void *multp_triangular_U(void *arg);
 void *multp_triangular_L(void *arg);
@@ -42,32 +41,13 @@ pthread_mutex_t mutexsum;
 double *A,*B,*C,*D,*E,*F,*DU,*DUF,*LB,*AA,*AAC,*AT,*U,*L;
 double b,u,l,ul;
 
-void *promedio(void *arg)
-{
-  int id = *(int*)arg;
-  int i,j;
-  double parcial = 0;
-  for(i=id*total;i<(id+1)*total;i++)
-  {
-    for (j = 0; j < N; j++)
-    {
-      parcial = parcial + B[i*N+j];
-    }
-  }
-  //acceso al mutex para actualizar el total
-  pthread_mutex_lock (&mutexsum);
-  sumU = sumU + parcial;
-  pthread_mutex_unlock (&mutexsum);
-  pthread_exit(NULL);
-}
-
 void *multp_triangular_L(void *arg)
 {
-  /* para acceder a la posicion U[i,j] = U[i*N+j-(i*(i+1))/2]*/
   int id = *(int*)arg;
   int i,j,k;
   double parcialL = 0;
   double parcialB = 0;
+  
   for(i=id*total;i<(id+1)*total;i++)
   {
    for(j=0;j<N;j++)
@@ -92,10 +72,10 @@ void *multp_triangular_L(void *arg)
 
 void *multp_triangular_U(void *arg)
 {
-  /* para acceder a la posicion L[i,j] = U[i*N+j-(i*(i+1))/2]*/
   int id = *(int*)arg;
   int i,j,k;
   double parcial = 0;
+  
   for(i=id*total;i<(id+1)*total;i++)
   {
    for(j=0;j<N;j++)
@@ -103,7 +83,6 @@ void *multp_triangular_U(void *arg)
      if(i<=j)
      {
        parcial = parcial + U[i+j*(j+1)/2];
-       //printf("U(%d)[%d,%d]=%.0f\n",id,i,j,U[i+j*(j+1)/2]);
      }
      for(k=0;k<=j;k++)
      {
@@ -122,7 +101,7 @@ void *multp_DU_F(void *arg)
 {
   int id = *(int*)arg;
   int i,j,k ;
-  //printf("\nid: %d , desde: %d, hasta: %d\n ",id,id*total,(id+1)*total);
+  
   for(i=id*total;i<(id+1)*total;i++)
   {
    for(j=0;j<N;j++)
@@ -140,7 +119,7 @@ void *multp_LB_E(void *arg)
 {
   int id = *(int*)arg;
   int i,j,k ;
-  //printf("\nid: %d , desde: %d, hasta: %d\n ",id,id*total,(id+1)*total);
+  
   for(i=id*total;i<(id+1)*total;i++)
   {
    for(j=0;j<N;j++)
@@ -159,7 +138,7 @@ void *trasponer(void *arg)
 {
   int id = *(int*)arg;
   int i,j,k ;
-  //printf("\nid: %d , desde: %d, hasta: %d\n ",id,id*total,(id+1)*total);
+  
   /* TRANSPUESTA */
   for(i=id*total;i<(id+1)*total;i++)
   {
@@ -175,7 +154,7 @@ void *multp_A_A(void *arg)
 {
   int id = *(int*)arg;
   int i,j,k ;
-  //printf("\nid: %d , desde: %d, hasta: %d\n ",id,id*total,(id+1)*total);
+  
   for(i=id*total;i<(id+1)*total;i++)
   {
    for(j=0;j<N;j++)
@@ -193,7 +172,7 @@ void *multp_AA_C(void *arg)
 {
   int id = *(int*)arg;
   int i,j,k ;
-  //printf("\nid: %d , desde: %d, hasta: %d\n ",id,id*total,(id+1)*total);
+  
   for(i=id*total;i<(id+1)*total;i++)
   {
    for(j=0;j<N;j++)
@@ -212,7 +191,7 @@ void *sum_todo(void *arg)
 {
   int id = *(int*)arg;
   int i,j,k ;
-  //printf("\nid: %d , desde: %d, hasta: %d\n ",id,id*total,(id+1)*total);
+  
   for(i=id*total;i<(id+1)*total;i++)
   {
    for(j=0;j<N;j++)
@@ -221,66 +200,6 @@ void *sum_todo(void *arg)
    }
   }
   pthread_exit(NULL);
-}
-
-void print_m(double *M, int dim)
-{
-  int i,j;
-  for(i=0;i<dim;i++)
-  {
-   for(j=0;j<dim;j++)
-   {
-     printf("|%.0f\t",M[i*dim+j]);
-   }
-   printf("|\n");
-  }
-}
-
-void print_mT(double *M, int dim)
-{
-  int i,j;
-  for(i=0;i<dim;i++)
-  {
-   for(j=0;j<dim;j++)
-   {
-     printf("|%.0f\t",M[i+j*dim]);
-   }
-   printf("|\n");
-  }
-}
-
-void print_mU(double *M, int dim)
-{
-  int i,j;
-  for(i=0;i<dim;i++)
-  {
-   for(j=0;j<dim;j++)
-   {
-     if(i<=j){
-      printf("|%.0f\t",M[i+(j*(j+1))/2]);
-     }else{
-      printf("|0\t");
-     }
-   }
-   printf("|\n");
-  }
-}
-
-void print_mL(double *M, int dim)
-{
-  int i,j;
-  for(i=0;i<dim;i++)
-  {
-   for(j=0;j<dim;j++)
-   {
-     if(i>=j){
-      printf("|%.0f\t",M[j+(i*(i+1))/2]);
-     }else{
-      printf("|0\t");
-     }
-   }
-   printf("|\n");
-  }
 }
 
 int main(int argc, char *argv[])
@@ -354,7 +273,6 @@ int main(int argc, char *argv[])
  }
 
  /* CODIGO SECUENCIAL */
-
 
  //Inicia el tiempo
  timetick = dwalltime();
@@ -470,9 +388,6 @@ int main(int argc, char *argv[])
  printf("Tiempo en segundos secuencial %f \n", time_secuencial);
  fprintf(fp, "|%.3f\t",time_secuencial);
 
-/*printf("Matriz TOTAL\n" );
-print_m(DUF,N);*/
-
  //Resetea las matrices
  for(i=0;i<N;i++)
  {
@@ -492,22 +407,7 @@ print_m(DUF,N);*/
  l = 0;
  u = 0;
  ul = 0;
- /*printf("Matriz D\n" );
- print_m(D,N);
- printf("Matriz U\n" );
- print_mU(U,N);
- printf("Matriz F\n" );
- print_mT(F,N);
- printf("Matriz L\n" );
- print_mL(L,N);
- printf("Matriz B\n" );
- print_mT(B,N);
- printf("Matriz E\n" );
- print_mT(E,N);
- printf("Matriz A\n" );
- print_m(A,N);
- printf("Matriz C\n" );
- print_mT(C,N);*/
+ 
 //Inicia el tiempo
 timetick = dwalltime();
 //Se crean los hilos para calcular el DU
@@ -520,10 +420,10 @@ for ( t = 0; t < numThreads; t++)
 {
   pthread_join(Hilos[t],NULL);
 }
-//u = sumU/(N*(N+1)/2);
 u = sumU/(N*N);
 free(D);
 free(U);
+
 //MULTIPLICACION DE DU*F
 for ( t = 0; t < numThreads; t++)
 {
@@ -535,10 +435,6 @@ for ( t = 0; t < numThreads; t++)
 }
 free(DU);
 free(F);
-//printf("promedio de U %.2f / %d = %.2f\n",sumU,(N*(N+1)/2), u);
-//printf("promedio de U %.2f / %d = %.2f\n",sumU,N*N, u);
-/*printf("Matriz DUF\n" );
-print_m(DUF,N);*/
 
 //MULTIPLICACION DE L*B
 for ( t = 0; t < numThreads; t++)
@@ -555,6 +451,7 @@ ul = u*l;
 b = sumB/(N*N);
 free(B);
 free(L);
+
 //MULTIPLICACION DE LB*E, Suma a DUF y Multiplicacion por el promedio de B
 for ( t = 0; t < numThreads; t++)
 {
@@ -566,9 +463,6 @@ for ( t = 0; t < numThreads; t++)
 }
 free(LB);
 free(E);
-
-/*printf("Matriz DUFLBE\n" );
-print_m(DUF,N);*/
 
 //TRANSPUESTA DE A
 for ( t = 0; t < numThreads; t++)
@@ -591,6 +485,7 @@ for ( t = 0; t < numThreads; t++)
 }
 free(A);
 free(AT);
+
 //MULTIPLICACION DE AA*C
 for ( t = 0; t < numThreads; t++)
 {
@@ -602,6 +497,7 @@ for ( t = 0; t < numThreads; t++)
 }
 free(AA);
 free(C);
+
 //SUMA DE AAC + RESTO
 for ( t = 0; t < numThreads; t++)
 {
@@ -612,27 +508,13 @@ for ( t = 0; t < numThreads; t++)
   pthread_join(Hilos[t],NULL);
 }
 
-//printf("promedio de L %.2f / %d = %.2f\n",sumL,(N*(N+1)/2), l);
-/*printf("promedio de L %.2f / %d = %.2f\n",sumL,N*N, l);
-printf("promedio de B %.2f / %d = %.2f\n",sumB,N*N, b);
-printf("ul = %.2f\n",ul);*/
-/* -- Fin de calculo del promedio de B --*/
 time_parallel = dwalltime() - timetick;
 printf("Tiempo en segundos paralelo %f \n", time_parallel);
 speedup = time_secuencial/time_parallel;
 printf("SpeedUp con %d hilos: %f \n",numThreads,speedup);
 fprintf(fp, "|%.3f\t|%.3f\t|%.3f\t",time_parallel,speedup,speedup/numThreads);
 fprintf(fp,"|%s\t|\n",cpu_id());
-/*printf("Matriz DU\n" );
-print_m(DU,N);
-printf("Matriz F\n" );
-print_mT(F,N);
-printf("Matriz LB\n" );
-print_m(LB,N);*/
-/*printf("Matriz AAC\n" );
-print_m(AAC,N);*/
-/*printf("Matriz TOTAL\n" );
-print_m(DUF,N);*/
+
 pthread_exit(NULL);
 fclose(fp);
 free(DUF);

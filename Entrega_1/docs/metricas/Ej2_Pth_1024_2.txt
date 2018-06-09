@@ -1,0 +1,3 @@
+|N	|pth	|t_sec	|t_par	|sp_Up	|efic	|CPU	|
+|1024	|2	|51.558	|26.271	|1.963	|0.981	|AMD Phenom(tm) II X4 955 Processor	|
+|1024	|2	|50.971	|25.210	|2.022	|1.011	|AMD Phenom(tm) II X4 955 Processor	|

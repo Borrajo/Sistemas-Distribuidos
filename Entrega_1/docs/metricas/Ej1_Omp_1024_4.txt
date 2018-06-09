@@ -1,0 +1,9 @@
+|N	|pth	|t_sec	|t_par	|sp_Up	|efic	|CPU	|
+|1024	|4	|6.270	|3.257	|1.925	|0.481	|       Intel(R) Core(TM) i3-3120M CPU @ 2.50GHz	|
+|1024	|4	|6.296	|3.264	|1.929	|0.482	|       Intel(R) Core(TM) i3-3120M CPU @ 2.50GHz	|
+|1024	|4	|6.234	|3.256	|1.915	|0.479	|       Intel(R) Core(TM) i3-3120M CPU @ 2.50GHz	|
+|1024	|4	|6.303	|3.260	|1.933	|0.483	|       Intel(R) Core(TM) i3-3120M CPU @ 2.50GHz	|
+|1024	|4	|6.293	|3.246	|1.939	|0.485	|       Intel(R) Core(TM) i3-3120M CPU @ 2.50GHz	|
+|1024	|4	|9.846	|2.755	|3.574	|0.893	|AMD Phenom(tm) II X4 955 Processor	|
+|1024	|4	|9.843	|2.916	|3.375	|0.844	|AMD Phenom(tm) II X4 955 Processor	|
+|1024	|4	|9.850	|2.756	|3.573	|0.893	|AMD Phenom(tm) II X4 955 Processor	|

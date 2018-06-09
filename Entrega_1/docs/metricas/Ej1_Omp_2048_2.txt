@@ -5,3 +5,4 @@
 |2048	|2	|79.520	|0.132	|601.691	|300.846	|AMD Phenom(tm) II X4 955 Processor	|
 |2048	|2	|78.857	|0.130	|606.367	|303.184	|AMD Phenom(tm) II X4 955 Processor	|
 |2048	|2	|78.809	|0.131	|603.113	|301.556	|AMD Phenom(tm) II X4 955 Processor	|
+|2048	|2	|49.688	|0.056	|894.434	|447.217	|       Intel(R) Core(TM) i3-3120M CPU @ 2.50GHz	|

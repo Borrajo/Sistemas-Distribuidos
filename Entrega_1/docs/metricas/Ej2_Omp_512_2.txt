@@ -1,3 +1,4 @@
 |N	|pth	|t_sec	|t_par	|sp_Up	|efic	|CPU	|
 |512	|2	|6.180	|1.771	|3.490	|1.745	|AMD Phenom(tm) II X4 955 Processor	|
 |512	|2	|6.257	|1.764	|3.546	|1.773	|AMD Phenom(tm) II X4 955 Processor	|
+|512	|2	|3.940	|2.077	|1.897	|0.949	|       Intel(R) Core(TM) i3-3120M CPU @ 2.50GHz	|

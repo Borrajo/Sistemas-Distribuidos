@@ -4,7 +4,7 @@
 
 void omp_mult(double *A, double *B, double *L, double *C, double *D, double *U, double *M, int total, int N, double ul){
  int i,j,k;
- #pragma omp parallel for collapse(3) private(k)
+ #pragma omp parallel for collapse(2) private(k)
  for(i=0;i<total;i++){
    for(j=0;j<N;j++){
      for(k=0;k<N;k++){
@@ -13,7 +13,7 @@ void omp_mult(double *A, double *B, double *L, double *C, double *D, double *U, 
    }
  }
 
- #pragma omp parallel for collapse(3) private(k)
+ #pragma omp parallel for collapse(2) private(k)
  for(i=0;i<total;i++){
    for(j=0;j<N;j++){
      for(k=0;k<=i;k++){
@@ -22,7 +22,7 @@ void omp_mult(double *A, double *B, double *L, double *C, double *D, double *U, 
    }
  }
 
- #pragma omp parallel for collapse(3) private(k)
+ #pragma omp parallel for collapse(2) private(k)
  for(i=0;i<total;i++){
    for(j=0;j<N;j++){
      for(k=0;k<=j;k++){
@@ -39,11 +39,12 @@ void omp_mult(double *A, double *B, double *L, double *C, double *D, double *U, 
  }
 }
 
-/*void omp_prom(){
+double omp_prom(double *U, double *L, int N){
  int i,j;
- 
- #pragma omp parallel for collapse(2) private(k) reduction(+:sumU)
   double total_u = 0 , total_l = 0;
+ 
+ #pragma omp parallel for collapse(2) private(k) reduction(+:total_u),reduction(+:total_l)
+
   for(i=0;i<N;i++){
     for(j=0;j<N;j++){
       if(i<=j)
@@ -56,5 +57,5 @@ void omp_mult(double *A, double *B, double *L, double *C, double *D, double *U, 
       }
     }
   }
-  *ul = total_u/N * total_l/N;
-}*/
+  return total_u/N * total_l/N;
+}

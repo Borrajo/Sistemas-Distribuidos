@@ -100,7 +100,7 @@ int main(int argc, char **argv)
 
     //Inicia el tiempo total
     time_total = dwalltime();
-    calcular_avg(&ul, U, L, N);
+    ul = omp_prom(U,L,N);
   }
   //TODOS los procesos ejecutan estas sentencias
   time_comunicacion = dwalltime();

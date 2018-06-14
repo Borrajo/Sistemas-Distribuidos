@@ -10,28 +10,17 @@ Calcular y analizar, en caso de existir, el desbalance de carga.
 El informe debe incluir las tablas con los tiempos de ejecución, el speedup y la
 eficiencia.
 + 1 Realizar un algoritmo MPI que resuelva la expresión:
-<<<<<<< HEAD
             M = ¬(u.l) * (AB + LC + DU)
-=======
-            M = ¬(u.l) * (AB + LC + UD)
->>>>>>> 9f40da664d25435961a3e455d38650d9f6ef0acf
     Donde A, B, C y D son matrices de NxN. L y U son matrices triangulares de NxN
 inferior y superior, respectivamente.¬u y ¬l son los promedios de los valores de
 los elementos de la matrices U y L, respectivamente.
 Evaluar N=512, 1024 y 2048.
 
   fila        columna
-<<<<<<< HEAD
   M,A,L,D     B,C,U
 
   L por fila = L[j+i*(i+1)/2]
   U por columna = U[i + j*(j+1)/2]
-=======
-  M,A,L,U     B,C,D
-
-  L por fila = L[j+i*(i+1)/2]
-  U por fila = U[i*N+j - i*(i+1)/2]
->>>>>>> 9f40da664d25435961a3e455d38650d9f6ef0acf
  */
 #include<stdio.h>
 #include<stdlib.h>
@@ -39,7 +28,7 @@ Evaluar N=512, 1024 y 2048.
 #include"tiempo.h"
 //#include"cpu.h"
 void print_m(double*,int,int);
-
+void calcular_avg(double*,double*,double*,int);
 int main(int argc, char **argv)
 {
   int miID;
@@ -49,8 +38,8 @@ int main(int argc, char **argv)
   int N;
   int k;
   int total;
-  double *M,*A,*B,*L,*C,*U,*D;
-  double u,l;
+  double *M,*A,*B,*L,*C,*U,*D,*AB,*LC,*DU;
+  double ul;
   double timetick;
   double time_gatter;
   double time_total;
@@ -144,6 +133,8 @@ int main(int argc, char **argv)
     MPI_Bcast(C, N*N, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     //se envia/recibe D
     MPI_Bcast(D, N*N, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    //se envia/recibe D
+    MPI_Bcast(&ul, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     //se envia/recibe las partes de A
     MPI_Scatter(A, N*total, MPI_DOUBLE,A, N*total, MPI_DOUBLE,0, MPI_COMM_WORLD);
     //se envia/recibe las partes de L
@@ -188,7 +179,7 @@ int main(int argc, char **argv)
      {
        printf("tiempo total con %d procesos: %f seg\n",NProcs,time_total);
        printf("matriz C de (%d:)\n",miID );
-       print_m(C,N,miID);
+       //print_m(C,N,miID);
      }
     /*printf("----procesos---\n" );
     printf("matriz A\n" );
@@ -202,19 +193,14 @@ int main(int argc, char **argv)
    return 0;
 }
 
-void calcular_avg(double *u, double *l, int N)
+void calcular_avg(double *ul, double *U, double *L, int N)
 {
   int i,j;
-<<<<<<< HEAD
   double total_u = 0 , total_l = 0;
-=======
-  double total_u, total_l;
->>>>>>> 9f40da664d25435961a3e455d38650d9f6ef0acf
   for (i = 0; i < N; i++)
   {
     for(j=0;j<N;j++)
     {
-<<<<<<< HEAD
       if(i<=j)
       {
         total_u = total_u + U[i+j*(j+1)/2];
@@ -225,13 +211,7 @@ void calcular_avg(double *u, double *l, int N)
       }
     }
   }
-  *u = total_u/N;
-  *l = total_l/N;
-=======
-
-    }
-  }
->>>>>>> 9f40da664d25435961a3e455d38650d9f6ef0acf
+  *ul = total_u/N * total_l/N;
 }
 
 void print_m(double *M, int dim,int id)

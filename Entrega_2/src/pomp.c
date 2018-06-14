@@ -28,6 +28,12 @@ void omp_mult(double *A, double *B, double *L, double *C, double *D, double *U, 
      for(k=0;k<=j;k++){
        M[i*N+j] =  M[i*N+j] + (D[i*N+k])*(U[k+(j*(j+1))/2]);
      }
+   }
+ }
+
+ #pragma omp parallel for collapse(2)
+ for(i=0;i<total;i++){
+   for(j=0;j<N;j++){
      M[i*N+j] =   M[i*N+j] * ul;
    }
  }

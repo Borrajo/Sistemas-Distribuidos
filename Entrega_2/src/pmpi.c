@@ -123,7 +123,7 @@ int main(int argc, char **argv)
   time_computo = dwalltime();
   /** Parte principal del programa donde se realizan las multiplicaciones y sumas***/
   
-  omp_mult(A,B,L,C,D,U,M,total,N);
+  omp_mult(A,B,L,C,D,U,M,total,N,ul);
 
   time_computo = dwalltime() - time_computo; //tiempo de computo
   time_gatter = dwalltime();

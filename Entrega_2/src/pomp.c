@@ -2,8 +2,8 @@
 #include<stdlib.h>
 #include<omp.h>
 
-void omp_mult(double *A, double *B, double *L, double *C, double *D, double *U, double *M, int total, int N){
- int i,j;
+void omp_mult(double *A, double *B, double *L, double *C, double *D, double *U, double *M, int total, int N, double ul){
+ int i,j,k;
  #pragma omp parallel for collapse(3) private(k)
  for(i=0;i<total;i++){
    for(j=0;j<N;j++){

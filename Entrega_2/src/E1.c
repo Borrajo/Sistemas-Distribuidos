@@ -10,28 +10,17 @@ Calcular y analizar, en caso de existir, el desbalance de carga.
 El informe debe incluir las tablas con los tiempos de ejecución, el speedup y la
 eficiencia.
 + 1 Realizar un algoritmo MPI que resuelva la expresión:
-<<<<<<< HEAD
             M = ¬(u.l) * (AB + LC + DU)
-=======
-            M = ¬(u.l) * (AB + LC + UD)
->>>>>>> 9f40da664d25435961a3e455d38650d9f6ef0acf
     Donde A, B, C y D son matrices de NxN. L y U son matrices triangulares de NxN
 inferior y superior, respectivamente.¬u y ¬l son los promedios de los valores de
 los elementos de la matrices U y L, respectivamente.
 Evaluar N=512, 1024 y 2048.
 
   fila        columna
-<<<<<<< HEAD
   M,A,L,D     B,C,U
 
   L por fila = L[j+i*(i+1)/2]
   U por columna = U[i + j*(j+1)/2]
-=======
-  M,A,L,U     B,C,D
-
-  L por fila = L[j+i*(i+1)/2]
-  U por fila = U[i*N+j - i*(i+1)/2]
->>>>>>> 9f40da664d25435961a3e455d38650d9f6ef0acf
  */
 #include<stdio.h>
 #include<stdlib.h>
@@ -39,7 +28,7 @@ Evaluar N=512, 1024 y 2048.
 #include"tiempo.h"
 //#include"cpu.h"
 void print_m(double*,int,int);
-
+void calcular_avg(double*,double*,double*,int);
 int main(int argc, char **argv)
 {
   int miID;
@@ -49,8 +38,8 @@ int main(int argc, char **argv)
   int N;
   int k;
   int total;
-  double *M,*A,*B,*L,*C,*U,*D;
-  double u,l;
+  double *M,*A,*B,*L,*C,*U,*D,*AB,*LC,*DU;
+  double ul;
   double timetick;
   double time_gatter;
   double time_total;
@@ -113,21 +102,12 @@ int main(int argc, char **argv)
         C[i+j*N]=rand()%10+1;
         D[i+j*N]=rand()%10+1;
       }
-<<<<<<< HEAD
-      for(j=i;j<N;j++){
+for(j=i;j<N;j++){
         U[i+(j*(j+1))/2] = rand()%10+1;
       }
       for(j=0;j<=i;j++){
         L[j+(i*(i+1))/2] = rand()%10+1;
       }
-=======
-      for(j=0;j<=i;j++){
-        L[j+(i*(i+1))/2] = rand()%10+1;
-      }
-      for(j=0;j>=i;j++){
-        U[i*N+j - i*(i+1)/2] = rand()%10+1;
-      }
->>>>>>> 9f40da664d25435961a3e455d38650d9f6ef0acf
     }
     /*printf("matriz A\n" );
     print_m(A, N, miID);
@@ -144,6 +124,8 @@ int main(int argc, char **argv)
     MPI_Bcast(C, N*N, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     //se envia/recibe D
     MPI_Bcast(D, N*N, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    //se envia/recibe D
+    MPI_Bcast(&ul, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     //se envia/recibe las partes de A
     MPI_Scatter(A, N*total, MPI_DOUBLE,A, N*total, MPI_DOUBLE,0, MPI_COMM_WORLD);
     //se envia/recibe las partes de L
@@ -153,29 +135,52 @@ int main(int argc, char **argv)
 
     time_comunicacion = dwalltime() - time_comunicacion;
     time_computo = dwalltime();
-   //una vez enviados todos los trozos de matrices, comienza a trabajar con su porcion
-    if(miID == 0)
-    {
-<<<<<<< HEAD
-      calcular_avg(&u,&l,N);
-=======
-      calcular_avg(&u,&l);
->>>>>>> 9f40da664d25435961a3e455d38650d9f6ef0acf
-    }
-    /***----***/
+    /** Parte principal del programa donde se realizan las multiplicaciones y sumas***/
+    //AB
      for(i=0;i<total;i++)
      {
       for(j=0;j<N;j++)
       {
        for(k=0;k<N;k++)
        {
-         C[i*N+j] =  C[i*N+j] + (A[i*N+k] * B[k+j*N]);
+         AB[i*N+j] =  AB[i*N+j] + (A[i*N+k] * B[k+j*N]);
        }
       }
      }
+     //LC
+      for(i=0;i<total;i++)
+      {
+       for(j=0;j<N;j++)
+       {
+         for(k=0;k<=i;k++)
+         {
+             LC[i*N+j] =  LC[i*N+j] + (L[k+(i*(i+1))/2] * C[k+j*N]);
+         }
+       }
+      }
+      //DU
+       for(i=0;i<total;i++)
+       {
+        for(j=0;j<N;j++)
+        {
+          for(k=0;k<=j;k++)
+          {
+              DU[i*N+j] =  DU[i*N+j] + (D[i*N+k])*(U[k+(j*(j+1))/2]);
+          }
+        }
+       }
+
+    //Una vez finalizadas las multiplicaciones se procede a realizar las sumas.
+    for(i=0;i<total;i++)
+    {
+     for(j=0;j<N;j++)
+     {
+       M[i*N+j] =   M[i*N+j] + ul*(AB[i*N+j] + LC[i*N+j] + DU[i*N+j]);
+     }
+    }
      time_computo = dwalltime() - time_computo; //tiempo de computo
      time_gatter = dwalltime();
-     MPI_Gather(C, N*total, MPI_DOUBLE ,C, N*total, MPI_DOUBLE,0, MPI_COMM_WORLD);
+     MPI_Gather(M, N*total, MPI_DOUBLE ,M, N*total, MPI_DOUBLE,0, MPI_COMM_WORLD);
      time_gatter = dwalltime() - time_gatter;
      time_comunicacion = time_comunicacion + time_gatter;
      if(miID == 0)
@@ -188,7 +193,7 @@ int main(int argc, char **argv)
      {
        printf("tiempo total con %d procesos: %f seg\n",NProcs,time_total);
        printf("matriz C de (%d:)\n",miID );
-       print_m(C,N,miID);
+       //print_m(C,N,miID);
      }
     /*printf("----procesos---\n" );
     printf("matriz A\n" );
@@ -202,19 +207,14 @@ int main(int argc, char **argv)
    return 0;
 }
 
-void calcular_avg(double *u, double *l, int N)
+void calcular_avg(double *ul, double *U, double *L, int N)
 {
   int i,j;
-<<<<<<< HEAD
   double total_u = 0 , total_l = 0;
-=======
-  double total_u, total_l;
->>>>>>> 9f40da664d25435961a3e455d38650d9f6ef0acf
   for (i = 0; i < N; i++)
   {
     for(j=0;j<N;j++)
     {
-<<<<<<< HEAD
       if(i<=j)
       {
         total_u = total_u + U[i+j*(j+1)/2];
@@ -225,13 +225,7 @@ void calcular_avg(double *u, double *l, int N)
       }
     }
   }
-  *u = total_u/N;
-  *l = total_l/N;
-=======
-
-    }
-  }
->>>>>>> 9f40da664d25435961a3e455d38650d9f6ef0acf
+  *ul = total_u/N * total_l/N;
 }
 
 void print_m(double *M, int dim,int id)

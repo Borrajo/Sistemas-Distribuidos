@@ -38,7 +38,7 @@ int main(int argc, char **argv)
   int N;
   int k;
   int total;
-  double *M,*A,*B,*L,*C,*U,*D,*AB,*LC,*DU;
+  double *M,*A,*B,*L,*C,*U,*D;
   double ul;
   double timetick;
   double time_gatter;
@@ -64,10 +64,6 @@ int main(int argc, char **argv)
   D=(double*)malloc(sizeof(double)*N*N);
   U=(double*)malloc(sizeof(double)*(N*(N+1)/2));
   L=(double*)malloc(sizeof(double)*(N*(N+1)/2));
-  //Aloca memoria para las matrices temporales
-  AB=(double*)malloc(sizeof(double)*N*total);
-  LC=(double*)malloc(sizeof(double)*N*total);
-  DU=(double*)malloc(sizeof(double)*N*total);
   //inicializacion de matriz resultante.
   for(i=0;i<N;i++)
   {
@@ -76,16 +72,7 @@ int main(int argc, char **argv)
       M[i*N+j]=0;
     }
   }
-  //Inicializacion de las matrices temporales
-  for(i=0;i<N;i++)
-  {
-    for(j=0;j<total;j++)
-    {
-      AB[i*N+j]=0;
-      LC[i*N+j]=0;
-      DU[i*N+j]=0;
-    }
-  }
+
   //el proceso 0 crea y carga los valores de las matrices A,B,C,D,U,L
   if(miID == 0)
   {
@@ -100,21 +87,19 @@ int main(int argc, char **argv)
         A[i*N+j]=rand()%10+1;
         B[i+j*N]=rand()%10+1;
         C[i+j*N]=rand()%10+1;
-        D[i+j*N]=rand()%10+1;
+        D[i*N+j]=rand()%10+1;
       }
-for(j=i;j<N;j++){
+      for(j=i;j<N;j++){
         U[i+(j*(j+1))/2] = rand()%10+1;
       }
       for(j=0;j<=i;j++){
         L[j+(i*(i+1))/2] = rand()%10+1;
       }
     }
-    /*printf("matriz A\n" );
-    print_m(A, N, miID);
-    printf("matriz B\n" );
-    print_m(B, N, miID);*/
+
     //Inicia el tiempo total
     time_total = dwalltime();
+    calcular_avg(&ul, U, L, N);
   }
   //TODOS los procesos ejecutan estas sentencias
     time_comunicacion = dwalltime();
@@ -124,7 +109,7 @@ for(j=i;j<N;j++){
     MPI_Bcast(C, N*N, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     //se envia/recibe D
     MPI_Bcast(D, N*N, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    //se envia/recibe D
+    //se envia/recibe ul
     MPI_Bcast(&ul, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     //se envia/recibe las partes de A
     MPI_Scatter(A, N*total, MPI_DOUBLE,A, N*total, MPI_DOUBLE,0, MPI_COMM_WORLD);
@@ -143,7 +128,7 @@ for(j=i;j<N;j++){
       {
        for(k=0;k<N;k++)
        {
-         AB[i*N+j] =  AB[i*N+j] + (A[i*N+k] * B[k+j*N]);
+         M[i*N+j] =  M[i*N+j] + (A[i*N+k] * B[k+j*N]);
        }
       }
      }
@@ -154,7 +139,7 @@ for(j=i;j<N;j++){
        {
          for(k=0;k<=i;k++)
          {
-             LC[i*N+j] =  LC[i*N+j] + (L[k+(i*(i+1))/2] * C[k+j*N]);
+             M[i*N+j] =  M[i*N+j] + (L[k+(i*(i+1))/2] * C[k+j*N]);
          }
        }
       }
@@ -165,19 +150,11 @@ for(j=i;j<N;j++){
         {
           for(k=0;k<=j;k++)
           {
-              DU[i*N+j] =  DU[i*N+j] + (D[i*N+k])*(U[k+(j*(j+1))/2]);
+              M[i*N+j] =  M[i*N+j] + (D[i*N+k])*(U[k+(j*(j+1))/2]);
           }
+	  M[i*N+j] =   M[i*N+j] * ul;
         }
        }
-
-    //Una vez finalizadas las multiplicaciones se procede a realizar las sumas.
-    for(i=0;i<total;i++)
-    {
-     for(j=0;j<N;j++)
-     {
-       M[i*N+j] =   M[i*N+j] + ul*(AB[i*N+j] + LC[i*N+j] + DU[i*N+j]);
-     }
-    }
      time_computo = dwalltime() - time_computo; //tiempo de computo
      time_gatter = dwalltime();
      MPI_Gather(M, N*total, MPI_DOUBLE ,M, N*total, MPI_DOUBLE,0, MPI_COMM_WORLD);
@@ -195,14 +172,13 @@ for(j=i;j<N;j++){
        printf("matriz C de (%d:)\n",miID );
        //print_m(C,N,miID);
      }
-    /*printf("----procesos---\n" );
-    printf("matriz A\n" );
-    print_m(A,N,miID);
-    printf("matriz B\n" );
-    print_m(B,N,miID);
-    */
-        //printf("C[%d,%d] = %0.f + (%0.f * %0.f)  \n", i,j,C[i*N+j], A[i*N+k] , B[k+j*N]);
-      //printf("C[%d,%d]: %0.f\n",i,j,C[i*N+j]);
+   free(A);
+   free(B);
+   free(L);
+   free(C);
+   free(D);
+   free(U);
+   free(M);
    MPI_Finalize();
    return 0;
 }

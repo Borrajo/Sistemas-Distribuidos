@@ -43,7 +43,7 @@ double omp_prom(double *U, double *L, int N){
  int i,j;
   double total_u = 0 , total_l = 0;
  
- #pragma omp parallel for collapse(2) private(k) reduction(+:total_u),reduction(+:total_l)
+ #pragma omp parallel for collapse(2) reduction(+:total_u),reduction(+:total_l)
 
   for(i=0;i<N;i++){
     for(j=0;j<N;j++){

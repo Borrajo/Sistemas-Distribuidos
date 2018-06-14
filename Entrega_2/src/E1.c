@@ -10,17 +10,28 @@ Calcular y analizar, en caso de existir, el desbalance de carga.
 El informe debe incluir las tablas con los tiempos de ejecución, el speedup y la
 eficiencia.
 + 1 Realizar un algoritmo MPI que resuelva la expresión:
+<<<<<<< HEAD
             M = ¬(u.l) * (AB + LC + DU)
+=======
+            M = ¬(u.l) * (AB + LC + UD)
+>>>>>>> 9f40da664d25435961a3e455d38650d9f6ef0acf
     Donde A, B, C y D son matrices de NxN. L y U son matrices triangulares de NxN
 inferior y superior, respectivamente.¬u y ¬l son los promedios de los valores de
 los elementos de la matrices U y L, respectivamente.
 Evaluar N=512, 1024 y 2048.
 
   fila        columna
+<<<<<<< HEAD
   M,A,L,D     B,C,U
 
   L por fila = L[j+i*(i+1)/2]
   U por columna = U[i + j*(j+1)/2]
+=======
+  M,A,L,U     B,C,D
+
+  L por fila = L[j+i*(i+1)/2]
+  U por fila = U[i*N+j - i*(i+1)/2]
+>>>>>>> 9f40da664d25435961a3e455d38650d9f6ef0acf
  */
 #include<stdio.h>
 #include<stdlib.h>
@@ -102,12 +113,21 @@ int main(int argc, char **argv)
         C[i+j*N]=rand()%10+1;
         D[i+j*N]=rand()%10+1;
       }
+<<<<<<< HEAD
       for(j=i;j<N;j++){
         U[i+(j*(j+1))/2] = rand()%10+1;
       }
       for(j=0;j<=i;j++){
         L[j+(i*(i+1))/2] = rand()%10+1;
       }
+=======
+      for(j=0;j<=i;j++){
+        L[j+(i*(i+1))/2] = rand()%10+1;
+      }
+      for(j=0;j>=i;j++){
+        U[i*N+j - i*(i+1)/2] = rand()%10+1;
+      }
+>>>>>>> 9f40da664d25435961a3e455d38650d9f6ef0acf
     }
     /*printf("matriz A\n" );
     print_m(A, N, miID);
@@ -136,7 +156,11 @@ int main(int argc, char **argv)
    //una vez enviados todos los trozos de matrices, comienza a trabajar con su porcion
     if(miID == 0)
     {
+<<<<<<< HEAD
       calcular_avg(&u,&l,N);
+=======
+      calcular_avg(&u,&l);
+>>>>>>> 9f40da664d25435961a3e455d38650d9f6ef0acf
     }
     /***----***/
      for(i=0;i<total;i++)
@@ -181,11 +205,16 @@ int main(int argc, char **argv)
 void calcular_avg(double *u, double *l, int N)
 {
   int i,j;
+<<<<<<< HEAD
   double total_u = 0 , total_l = 0;
+=======
+  double total_u, total_l;
+>>>>>>> 9f40da664d25435961a3e455d38650d9f6ef0acf
   for (i = 0; i < N; i++)
   {
     for(j=0;j<N;j++)
     {
+<<<<<<< HEAD
       if(i<=j)
       {
         total_u = total_u + U[i+j*(j+1)/2];
@@ -198,6 +227,11 @@ void calcular_avg(double *u, double *l, int N)
   }
   *u = total_u/N;
   *l = total_l/N;
+=======
+
+    }
+  }
+>>>>>>> 9f40da664d25435961a3e455d38650d9f6ef0acf
 }
 
 void print_m(double *M, int dim,int id)

@@ -1,10 +1,3 @@
-//caracteristicas:
-//Raspberry 2b
-//  Procesador: ARM Cortex A7 900Mhz
-//  RAM: 1GB
-//Raspberry 3
-//  Procesador: Broadcom BCM2837 1.2Ghz
-//  RAM: 1GB
 /*
 Calcular y analizar, en caso de existir, el desbalance de carga.
 El informe debe incluir las tablas con los tiempos de ejecución, el speedup y la
@@ -63,13 +56,14 @@ int main(int argc, char **argv)
   C=(double*)malloc(sizeof(double)*N*N);
   D=(double*)malloc(sizeof(double)*N*N);
   U=(double*)malloc(sizeof(double)*(N*(N+1)/2));
-  L=(double*)malloc(sizeof(double)*(N*(N+1)/2));
+  L=(double*)malloc(sizeof(double)*N*N);
   //inicializacion de matriz resultante.
   for(i=0;i<N;i++)
   {
     for(j=0;j<N;j++)
     {
       M[i*N+j]=0;
+      L[i*N+j]=0;
     }
   }
 
@@ -93,7 +87,7 @@ int main(int argc, char **argv)
         U[i+(j*(j+1))/2] = rand()%10+1;
       }
       for(j=0;j<=i;j++){
-        L[j+(i*(i+1))/2] = rand()%10+1;
+        L[i*N+j] = rand()%10+1;
       }
     }
 
@@ -108,7 +102,7 @@ int main(int argc, char **argv)
     //se envia/recibe C
     MPI_Bcast(C, N*N, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     //se envia/recibe D
-    MPI_Bcast(D, N*N, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(U, (N*(N+1)/2), MPI_DOUBLE, 0, MPI_COMM_WORLD);
     //se envia/recibe ul
     MPI_Bcast(&ul, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     //se envia/recibe las partes de A
@@ -116,7 +110,7 @@ int main(int argc, char **argv)
     //se envia/recibe las partes de L
     MPI_Scatter(L, N*total, MPI_DOUBLE,L, N*total, MPI_DOUBLE,0, MPI_COMM_WORLD);
     //se envia/recibe las partes de U
-    MPI_Scatter(U, N*total, MPI_DOUBLE,U, N*total, MPI_DOUBLE,0, MPI_COMM_WORLD);
+    MPI_Scatter(D, N*total, MPI_DOUBLE,D, N*total, MPI_DOUBLE,0, MPI_COMM_WORLD);
 
     time_comunicacion = dwalltime() - time_comunicacion;
     time_computo = dwalltime();
@@ -132,14 +126,15 @@ int main(int argc, char **argv)
        }
       }
      }
+     
      //LC
       for(i=0;i<total;i++)
       {
        for(j=0;j<N;j++)
        {
-         for(k=0;k<=i;k++)
+         for(k=0;k<=(miID*total)+i;k++)
          {
-             M[i*N+j] =  M[i*N+j] + (L[k+(i*(i+1))/2] * C[k+j*N]);
+             M[i*N+j] =  M[i*N+j] + (L[i*N+k] * C[k+j*N]);
          }
        }
       }
@@ -169,8 +164,7 @@ int main(int argc, char **argv)
      if(miID == 0)
      {
        printf("tiempo total con %d procesos: %f seg\n",NProcs,time_total);
-       printf("matriz C de (%d:)\n",miID );
-       //print_m(C,N,miID);
+    
      }
    free(A);
    free(B);
@@ -197,11 +191,11 @@ void calcular_avg(double *ul, double *U, double *L, int N)
       }
       if(i>=j)
       {
-        total_l = total_l + L[j+(i*(i+1))/2];
+        total_l = total_l + L[i*N+j];
       }
     }
   }
-  *ul = total_u/N * total_l/N;
+  *ul = (total_u/(N*N)) * (total_l/(N*N));
 }
 
 void print_m(double *M, int dim,int id)
@@ -211,7 +205,7 @@ void print_m(double *M, int dim,int id)
   {
    for(j=0;j<dim;j++)
    {
-     printf("(%d:)|%.0f\t",id,M[i*dim+j]);
+     printf("|%.0f\t",M[i*dim+j]);
    }
    printf("|\n");
   }

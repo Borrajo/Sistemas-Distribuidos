@@ -2,7 +2,7 @@
 #include<stdlib.h>
 #include<omp.h>
 
-void omp_mult(double *A, double *B, double *L, double *C, double *D, double *U, double *M, int total, int N, double ul){
+void omp_mult(double *A, double *B, double *L, double *C, double *D, double *U, double *M, int total, int N, double ul, int miID){
  int i,j,k;
  #pragma omp parallel for collapse(2) private(k)
  for(i=0;i<total;i++){
@@ -16,8 +16,8 @@ void omp_mult(double *A, double *B, double *L, double *C, double *D, double *U, 
  #pragma omp parallel for collapse(2) private(k)
  for(i=0;i<total;i++){
    for(j=0;j<N;j++){
-     for(k=0;k<=i;k++){
-       M[i*N+j] =  M[i*N+j] + (L[k+(i*(i+1))/2] * C[k+j*N]);
+     for(k=0;k<=(miID*total)+i;k++){
+       M[i*N+j] =  M[i*N+j] + (L[i*N+k] * C[k+j*N]);
      }
    }
  }
@@ -53,9 +53,9 @@ double omp_prom(double *U, double *L, int N){
       }
       if(i>=j)
       {
-        total_l = total_l + L[j+(i*(i+1))/2];
+        total_l = total_l + L[i*N+j];
       }
     }
   }
-  return total_u/N * total_l/N;
+  return (total_u/(N*N)) * (total_l/(N*N));
 }

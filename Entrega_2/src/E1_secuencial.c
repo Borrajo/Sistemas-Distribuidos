@@ -1,10 +1,3 @@
-//caracteristicas:
-//Raspberry 2b
-//  Procesador: ARM Cortex A7 900Mhz
-//  RAM: 1GB
-//Raspberry 3
-//  Procesador: Broadcom BCM2837 1.2Ghz
-//  RAM: 1GB
 /*
 Calcular y analizar, en caso de existir, el desbalance de carga.
 El informe debe incluir las tablas con los tiempos de ejecución, el speedup y la
@@ -19,7 +12,6 @@ Evaluar N=512, 1024 y 2048.
   fila        columna
   M,A,L,D     B,C,U
 
-  L por fila = L[j+i*(i+1)/2]
   U por columna = U[i + j*(j+1)/2]
  */
 #include<stdio.h>
@@ -46,13 +38,14 @@ int main(int argc, char **argv)
   C=(double*)malloc(sizeof(double)*N*N);
   D=(double*)malloc(sizeof(double)*N*N);
   U=(double*)malloc(sizeof(double)*(N*(N+1)/2));
-  L=(double*)malloc(sizeof(double)*(N*(N+1)/2));
+  L=(double*)malloc(sizeof(double)*N*N);
   //inicializacion de matriz resultante.
   for(i=0;i<N;i++)
   {
     for(j=0;j<N;j++)
     {
       M[i*N+j]=0;
+      L[i*N+j]=0;
     }
   }
 
@@ -72,7 +65,7 @@ int main(int argc, char **argv)
         U[i+(j*(j+1))/2] = rand()%10+1;
       }
       for(j=0;j<=i;j++){
-        L[j+(i*(i+1))/2] = rand()%10+1;
+        L[i*N+j] = rand()%10+1;
       }
     }
 
@@ -98,7 +91,7 @@ int main(int argc, char **argv)
        {
          for(k=0;k<=i;k++)
          {
-             M[i*N+j] =  M[i*N+j] + (L[k+(i*(i+1))/2] * C[k+j*N]);
+             M[i*N+j] =  M[i*N+j] + (L[i*N+k] * C[k+j*N]);
          }
        }
       }
@@ -117,9 +110,7 @@ int main(int argc, char **argv)
      time_total = dwalltime() - timetick;
      printf("| 0\t| %f\t|\n",time_total);
 
-       printf("tiempo total %f seg\n",time_total);
-       printf("matriz C de (%d:)\n",0 );
-       //print_m(C,N,miID);
+     printf("tiempo total %f seg\n",time_total);
 
    free(A);
    free(B);
@@ -145,11 +136,11 @@ void calcular_avg(double *ul, double *U, double *L, int N)
       }
       if(i>=j)
       {
-        total_l = total_l + L[j+(i*(i+1))/2];
+        total_l = total_l + L[i*N+j];
       }
     }
   }
-  *ul = total_u/N * total_l/N;
+  *ul = (total_u/(N*N)) * (total_l/(N*N));
 }
 
 void print_m(double *M, int dim,int id)
@@ -159,7 +150,7 @@ void print_m(double *M, int dim,int id)
   {
    for(j=0;j<dim;j++)
    {
-     printf("(%d:)|%.0f\t",id,M[i*dim+j]);
+     printf("|%.0f\t",M[i*dim+j]);
    }
    printf("|\n");
   }

@@ -26,10 +26,16 @@ Evaluar N=512, 1024 y 2048.
 #include"tiempo.h"
 #include"cpu.h"
 
-void *multiplicacion(void *arg);
-void *multp_triangular_U(void *arg);
-void *multp_triangular_L(void *arg);
-void *multp_DU_F(void *arg);
+void multiplicacion(int);
+void multp_triangular_U(int);
+void multp_triangular_L(int);
+void multp_DU_F(int);
+void multp_LB_E(int);
+void trasponer(int);
+void multp_A_A(int);
+void multp_AA_C(int);
+void sum_todo(int);
+void *calculo(void *arg);
 
 unsigned int N;
 double sumU = 0;
@@ -40,14 +46,18 @@ int num[]= {0,1,2,3,4,5,6,7};
 pthread_mutex_t mutexsum;
 double *A,*B,*C,*D,*E,*F,*DU,*DUF,*LB,*AA,*AAC,*AT,*U,*L;
 double b,u,l,ul;
+pthread_barrier_t barrera;
+pthread_barrier_t barrera2;
+pthread_barrier_t barrera3;
+pthread_barrier_t barrera4;
+pthread_barrier_t barrera5;
 
-void *multp_triangular_L(void *arg)
+void multp_triangular_L(int id)
 {
-  int id = *(int*)arg;
   int i,j,k;
   double parcialL = 0;
   double parcialB = 0;
-  
+
   for(i=id*total;i<(id+1)*total;i++)
   {
    for(j=0;j<N;j++)
@@ -67,15 +77,13 @@ void *multp_triangular_L(void *arg)
   sumL = sumL + parcialL;
   sumB = sumB + parcialB;
   pthread_mutex_unlock (&mutexsum);
-  pthread_exit(NULL);
 }
 
-void *multp_triangular_U(void *arg)
+void multp_triangular_U(int id)
 {
-  int id = *(int*)arg;
   int i,j,k;
   double parcial = 0;
-  
+
   for(i=id*total;i<(id+1)*total;i++)
   {
    for(j=0;j<N;j++)
@@ -94,14 +102,54 @@ void *multp_triangular_U(void *arg)
   pthread_mutex_lock (&mutexsum);
   sumU = sumU + parcial;
   pthread_mutex_unlock (&mutexsum);
-  pthread_exit(NULL);
 }
 
-void *multp_DU_F(void *arg)
+void *calculo(void *arg)
 {
-  int id = *(int*)arg;
+	int id = *(int*)arg;
+	//Multiplicacion de D*U
+	multp_triangular_U(id);
+	//MULTIPLICACION DE L*B
+	multp_triangular_L(id);
+  //TRANSPUESTA DE A
+  trasponer(id);
+
+  //Estas 3 funciones las ejecuta el programa principal
+  if(id == 0)
+  {
+    sumU/(N*N);
+    l = sumL/(N*N);
+    ul = u*l;
+    b = sumB/(N*N);
+  }
+	pthread_barrier_wait(&barrera);
+  //para cualquier otro calculo son necesarias alguna de estas matrices.
+
+  //MULTIPLICACION DE DU*F
+  multp_DU_F(id);
+  pthread_barrier_wait(&barrera2);
+
+	//MULTIPLICACION DE LB*E, Suma a DUF y Multiplicacion por el promedio de B
+	multp_LB_E(id);
+	pthread_barrier_wait(&barrera3);
+
+	//MULTIPLICACION DE A*A
+	multp_A_A(id);
+	pthread_barrier_wait(&barrera4);
+
+	//MULTIPLICACION DE AA*C
+	multp_AA_C(id);
+	pthread_barrier_wait(&barrera5);
+
+	//SUMA DE AAC + RESTO
+	sum_todo(id);
+
+	pthread_exit(NULL);
+}
+
+void multp_DU_F(int id)
+{
   int i,j,k ;
-  
   for(i=id*total;i<(id+1)*total;i++)
   {
    for(j=0;j<N;j++)
@@ -112,14 +160,11 @@ void *multp_DU_F(void *arg)
     }
    }
   }
-  pthread_exit(NULL);
 }
 
-void *multp_LB_E(void *arg)
+void multp_LB_E(int id)
 {
-  int id = *(int*)arg;
   int i,j,k ;
-  
   for(i=id*total;i<(id+1)*total;i++)
   {
    for(j=0;j<N;j++)
@@ -131,14 +176,12 @@ void *multp_LB_E(void *arg)
     DUF[i*N+j] =  DUF[i*N+j]*b;
    }
   }
-  pthread_exit(NULL);
 }
 
-void *trasponer(void *arg)
+void trasponer(int id)
 {
-  int id = *(int*)arg;
   int i,j,k ;
-  
+
   /* TRANSPUESTA */
   for(i=id*total;i<(id+1)*total;i++)
   {
@@ -147,14 +190,11 @@ void *trasponer(void *arg)
     AT[i+N*j] = A[i*N+j];
    }
   }
-  pthread_exit(NULL);
 }
 
-void *multp_A_A(void *arg)
+void multp_A_A(int id)
 {
-  int id = *(int*)arg;
   int i,j,k ;
-  
   for(i=id*total;i<(id+1)*total;i++)
   {
    for(j=0;j<N;j++)
@@ -165,14 +205,11 @@ void *multp_A_A(void *arg)
     }
    }
   }
-  pthread_exit(NULL);
 }
 
-void *multp_AA_C(void *arg)
+void multp_AA_C(int id)
 {
-  int id = *(int*)arg;
   int i,j,k ;
-  
   for(i=id*total;i<(id+1)*total;i++)
   {
    for(j=0;j<N;j++)
@@ -184,14 +221,12 @@ void *multp_AA_C(void *arg)
     AAC[i*N+j] =  AAC[i*N+j]*ul;
    }
   }
-  pthread_exit(NULL);
 }
 
-void *sum_todo(void *arg)
+void sum_todo(int id)
 {
-  int id = *(int*)arg;
   int i,j,k ;
-  
+
   for(i=id*total;i<(id+1)*total;i++)
   {
    for(j=0;j<N;j++)
@@ -199,7 +234,6 @@ void *sum_todo(void *arg)
      DUF[i*N+j] =  DUF[i*N+j] + AAC[i*N+j];
    }
   }
-  pthread_exit(NULL);
 }
 
 int main(int argc, char *argv[])
@@ -407,101 +441,19 @@ int main(int argc, char *argv[])
  l = 0;
  u = 0;
  ul = 0;
- 
+
 //Inicia el tiempo
 timetick = dwalltime();
 //Se crean los hilos para calcular el DU
 pthread_mutex_init(&mutexsum, NULL);
+pthread_barrier_init(&barrera, NULL, numThreads); //cantidad de procesos en espera
+pthread_barrier_init(&barrera2, NULL, numThreads); //cantidad de procesos en espera
+pthread_barrier_init(&barrera3, NULL, numThreads); //cantidad de procesos en espera
+pthread_barrier_init(&barrera4, NULL, numThreads); //cantidad de procesos en espera
+pthread_barrier_init(&barrera5, NULL, numThreads); //cantidad de procesos en espera
 for ( t = 0; t < numThreads; t++)
 {
-  pthread_create(&Hilos[t], NULL, multp_triangular_U, (void*)&num[t]);
-}
-for ( t = 0; t < numThreads; t++)
-{
-  pthread_join(Hilos[t],NULL);
-}
-u = sumU/(N*N);
-free(D);
-free(U);
-
-//MULTIPLICACION DE DU*F
-for ( t = 0; t < numThreads; t++)
-{
-  pthread_create(&Hilos[t], NULL, multp_DU_F, (void*)&num[t]);
-}
-for ( t = 0; t < numThreads; t++)
-{
-  pthread_join(Hilos[t],NULL);
-}
-free(DU);
-free(F);
-
-//MULTIPLICACION DE L*B
-for ( t = 0; t < numThreads; t++)
-{
-  pthread_create(&Hilos[t], NULL, multp_triangular_L, (void*)&num[t]);
-}
-for ( t = 0; t < numThreads; t++)
-{
-  pthread_join(Hilos[t],NULL);
-}
-//l = sumL/(N*(N+1)/2);
-l = sumL/(N*N);
-ul = u*l;
-b = sumB/(N*N);
-free(B);
-free(L);
-
-//MULTIPLICACION DE LB*E, Suma a DUF y Multiplicacion por el promedio de B
-for ( t = 0; t < numThreads; t++)
-{
-  pthread_create(&Hilos[t], NULL, multp_LB_E, (void*)&num[t]);
-}
-for ( t = 0; t < numThreads; t++)
-{
-  pthread_join(Hilos[t],NULL);
-}
-free(LB);
-free(E);
-
-//TRANSPUESTA DE A
-for ( t = 0; t < numThreads; t++)
-{
-  pthread_create(&Hilos[t], NULL, trasponer, (void*)&num[t]);
-}
-for ( t = 0; t < numThreads; t++)
-{
-  pthread_join(Hilos[t],NULL);
-}
-
-//MULTIPLICACION DE A*A
-for ( t = 0; t < numThreads; t++)
-{
-  pthread_create(&Hilos[t], NULL, multp_A_A, (void*)&num[t]);
-}
-for ( t = 0; t < numThreads; t++)
-{
-  pthread_join(Hilos[t],NULL);
-}
-free(A);
-free(AT);
-
-//MULTIPLICACION DE AA*C
-for ( t = 0; t < numThreads; t++)
-{
-  pthread_create(&Hilos[t], NULL, multp_AA_C, (void*)&num[t]);
-}
-for ( t = 0; t < numThreads; t++)
-{
-  pthread_join(Hilos[t],NULL);
-}
-free(AA);
-free(C);
-
-//SUMA DE AAC + RESTO
-for ( t = 0; t < numThreads; t++)
-{
-  pthread_create(&Hilos[t], NULL, sum_todo, (void*)&num[t]);
+  pthread_create(&Hilos[t], NULL, calculo, (void*)&num[t]);
 }
 for ( t = 0; t < numThreads; t++)
 {
@@ -517,6 +469,18 @@ fprintf(fp,"|%s\t|\n",cpu_id());
 
 pthread_exit(NULL);
 fclose(fp);
+free(B);
+free(L);
+free(A);
+free(LB);
+free(E);
+free(AT);
+free(AA);
+free(C);
+free(D);
+free(U);
+free(DU);
+free(F);
 free(DUF);
 free(AAC);
 }

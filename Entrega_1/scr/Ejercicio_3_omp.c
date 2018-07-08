@@ -52,7 +52,7 @@ int main(int argc, char *argv[]){
 
   for(i=0;i<N;i++)
   {
-     V[i]=rand()%20+1;
+     V[i]=rand()%10000+1;
   }
 
   timetick = dwalltime();
